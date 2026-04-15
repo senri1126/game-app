@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>進化したガシャ・セレクター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&display=swap');
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: #0f172a;
+            color: white;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #gacha-area {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            background: radial-gradient(circle at center, #1e293b, #020617);
+            border-bottom: 4px solid #334155;
+            overflow: hidden;
+        }
+
+        .capsule {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset -4px -4px 10px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, width 0.8s ease, height 0.8s ease, top 0.8s ease, left 0.8s ease, filter 0.3s ease;
+            z-index: 10;
+            user-select: none;
+        }
+
+        /* 加速中のエフェクト */
+        .boosted {
+            filter: brightness(1.5) contrast(1.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        /* ピックアップ時のスタイル */
+        .picking {
+            z-index: 100 !important;
+            width: 180px !important;
+            height: 180px !important;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.4);
+            cursor: default;
+        }
+
+        /* ぶるぶる震えるアニメーション */
+        @keyframes vibrate {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            10% {
+                transform: translate(-2px, -2px) rotate(-1deg);
+            }
+
+            20% {
+                transform: translate(2px, 0px) rotate(1deg);
+            }
+
+            30% {
+                transform: translate(-2px, 2px) rotate(0deg);
+            }
+
+            40% {
+                transform: translate(2px, -2px) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(-2px, 0px) rotate(-1deg);
+            }
+
+            60% {
+                transform: translate(2px, 2px) rotate(0deg);
+            }
+
+            70% {
+                transform: translate(-2px, -2px) rotate(-1deg);
+            }
+
+            80% {
+                transform: translate(2px, 0px) rotate(1deg);
+            }
+
+            90% {
+                transform: translate(-2px, 2px) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+        }
+
+        .vibrating {
+            animation: vibrate 0.1s linear infinite;
+        }
+
+        .capsule-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .capsule-top {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+            transition: transform 0.6s ease;
+        }
+
+        .capsule-bottom {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50%;
+            transition: transform 0.6s ease;
+        }
+
+        .cracked .capsule-top {
+            transform: translateY(-100px) rotate(-20deg);
+            opacity: 0;
+        }
+
+        .cracked .capsule-bottom {
+            transform: translateY(100px) rotate(20deg);
+            opacity: 0;
+        }
+
+        .name-tag {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            color: #1e293b;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 2.5rem;
+            font-weight: 900;
+            white-space: nowrap;
+            box-shadow: 0 0 40px white;
+            z-index: 120;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        .name-tag.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .final-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .congrats-banner {
+            font-size: 5rem;
+            color: #f43f5e;
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex flex-col h-full">
+        <div id="gacha-area">
+            <div id="hint"
+                class="absolute inset-0 flex flex-col items-center justify-center opacity-40 pointer-events-none">
+                <p class="text-xl">中にあるカプセルを選ぼう！</p>
+                <p class="text-sm mt-2">（クリックするとカプセルが驚くよ！）</p>
+            </div>
+        </div>
+
+        <div class="flex-1 bg-slate-900 p-6 flex flex-col items-center justify-around border-t-4 border-slate-800">
+            <div id="status" class="text-xl font-bold text-cyan-400">
+                あと 5 人選出します
+            </div>
+
+            <button id="draw-btn" onclick="drawFromPool()"
+                class="bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-black py-4 px-14 rounded-2xl shadow-lg transition transform active:scale-95 text-2xl">
+                ランダムに選出！
+            </button>
+
+            <div class="w-full max-w-lg">
+                <div id="history-pills" class="flex flex-wrap justify-center gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="final-screen" class="final-screen p-6">
+        <h2 class="congrats-banner animate__animated animate__heartBeat animate__infinite">おめでとう！</h2>
+        <div class="bg-slate-800 border-2 border-cyan-500 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+            <p class="text-cyan-400 font-bold mb-4">選ばれたラッキーな5人</p>
+            <div id="final-list" class="space-y-3 text-2xl font-black"></div>
+            <button onclick="location.reload()" class="mt-8 text-slate-400 hover:text-white underline">やり直す</button>
+        </div>
+    </div>
+
+    <script>
+        const nameList = ["佐藤", "鈴木", "高橋", "田中", "伊藤", "渡辺", "山本", "中村", "小林", "加藤", "吉田", "山田", "佐々木", "山口", "松本", "井上", "木村", "林", "斎藤", "清水"];
+        let pool = [...nameList].sort(() => Math.random() - 0.5);
+        let winners = [];
+        let isProcessing = false;
+        const colors = ['#f87171', '#fb923c', '#fbbf24', '#4ade80', '#2dd4bf', '#38bdf8', '#818cf8', '#c084fc', '#f472b6'];
+
+        const area = document.getElementById('gacha-area');
+        const statusText = document.getElementById('status');
+        const historyDiv = document.getElementById('history-pills');
+        const drawBtn = document.getElementById('draw-btn');
+
+        const capsuleElements = [];
+
+        nameList.forEach((name, i) => {
+            const cap = document.createElement('div');
+            cap.className = 'capsule';
+            const color = colors[i % colors.length];
+
+            cap.innerHTML = `
+                <div class="capsule-content">
+                    <div class="capsule-top"></div>
+                    <div class="capsule-bottom" style="background:${color}"></div>
+                </div>
+                <div class="name-tag">${name}</div>
+            `;
+
+            cap.style.left = Math.random() * (window.innerWidth - 70) + 'px';
+            cap.style.top = Math.random() * (window.innerHeight * 0.6 - 70) + 'px';
+
+            cap.vx = (Math.random() - 0.5) * 2;
+            cap.vy = (Math.random() - 0.5) * 2;
+            cap.name = name;
+
+            cap.addEventListener('mousedown', (e) => {
+                if (isProcessing) return;
+                boostCapsule(cap);
+            });
+
+            area.appendChild(cap);
+            capsuleElements.push(cap);
+        });
+
+        function boostCapsule(cap) {
+            if (cap.isPicked || cap.isBoosted) return;
+
+            cap.isBoosted = true;
+            cap.classList.add('boosted');
+
+            const originalVx = cap.vx;
+            const originalVy = cap.vy;
+            cap.vx *= 6;
+            cap.vy *= 6;
+
+            setTimeout(() => {
+                if (cap.isPicked) return;
+                cap.vx = originalVx;
+                cap.vy = originalVy;
+                cap.isBoosted = false;
+                cap.classList.remove('boosted');
+            }, 1000);
+        }
+
+        function updatePhysics() {
+            capsuleElements.forEach(cap => {
+                if (cap.isPicked) return;
+
+                let x = parseFloat(cap.style.left);
+                let y = parseFloat(cap.style.top);
+
+                x += cap.vx;
+                y += cap.vy;
+
+                if (x <= 0) { x = 0; cap.vx *= -1; }
+                if (x >= window.innerWidth - 60) { x = window.innerWidth - 60; cap.vx *= -1; }
+                if (y <= 0) { y = 0; cap.vy *= -1; }
+                if (y >= window.innerHeight * 0.6 - 60) { y = window.innerHeight * 0.6 - 60; cap.vy *= -1; }
+
+                cap.style.left = x + 'px';
+                cap.style.top = y + 'px';
+
+                const rotationSpeed = cap.isBoosted ? 2 : 0.5;
+                cap.style.transform = `rotate(${x * rotationSpeed}deg)`;
+            });
+            requestAnimationFrame(updatePhysics);
+        }
+        updatePhysics();
+
+        function drawFromPool() {
+            if (isProcessing || capsuleElements.length === 0) return;
+            const randomIdx = Math.floor(Math.random() * capsuleElements.length);
+            drawSpecific(capsuleElements[randomIdx]);
+        }
+
+        async function drawSpecific(cap) {
+            if (isProcessing || winners.length >= 5) return;
+            isProcessing = true;
+            cap.isPicked = true;
+            cap.isBoosted = false;
+            cap.classList.remove('boosted');
+            drawBtn.disabled = true;
+
+            // 1. 中央へピックアップ
+            cap.classList.add('picking');
+            cap.style.left = (window.innerWidth / 2 - 90) + 'px';
+            cap.style.top = (window.innerHeight * 0.3 - 90) + 'px';
+            cap.style.transform = 'rotate(0deg)';
+
+            // 移動完了を待つ
+            await new Promise(r => setTimeout(r, 800));
+
+            // 2. ぶるぶる震えて「溜め」を作る (約2秒)
+            cap.classList.add('vibrating');
+            await new Promise(r => setTimeout(r, 2000));
+            cap.classList.remove('vibrating');
+
+            // 3. カプセルを割る
+            cap.classList.add('cracked');
+            const tag = cap.querySelector('.name-tag');
+            tag.classList.add('show');
+
+            spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.3);
+
+            await new Promise(r => setTimeout(r, 2000));
+
+            // 4. データの更新
+            winners.push(cap.name);
+            const pill = document.createElement('span');
+            pill.className = 'bg-slate-700 text-cyan-300 px-4 py-1 rounded-full text-sm animate__animated animate__fadeInUp font-bold';
+            pill.textContent = cap.name;
+            historyDiv.appendChild(pill);
+
+            tag.classList.remove('show');
+            cap.remove();
+            capsuleElements.splice(capsuleElements.indexOf(cap), 1);
+
+            if (winners.length < 5) {
+                statusText.textContent = `あと ${5 - winners.length} 人選出します`;
+                isProcessing = false;
+                drawBtn.disabled = false;
+            } else {
+                showFinal();
+            }
+        }
+
+        function spawnConfetti(x, y, isFinal = false) {
+            const count = isFinal ? 15 : 40;
+            for (let i = 0; i < count; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.width = (Math.random() * 10 + 5) + 'px';
+                c.style.height = c.style.width;
+                c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 60%)`;
+
+                if (isFinal) {
+                    c.style.left = Math.random() * 100 + 'vw';
+                    c.style.top = '-20px';
+                } else {
+                    c.style.left = x + 'px';
+                    c.style.top = y + 'px';
+                }
+
+                document.body.appendChild(c);
+
+                c.animate([
+                    { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate(${(Math.random() - 0.5) * 400}px, ${window.innerHeight}px) rotate(720deg)`, opacity: 0 }
+                ], {
+                    duration: 2000 + Math.random() * 2000,
+                    easing: 'cubic-bezier(0, .9, .57, 1)'
+                }).onfinish = () => c.remove();
+            }
+        }
+
+        function showFinal() {
+            const screen = document.getElementById('final-screen');
+            const list = document.getElementById('final-list');
+
+            winners.forEach((w, i) => {
+                const item = document.createElement('div');
+                item.className = 'animate__animated animate__fadeInLeft';
+                item.style.animationDelay = `${i * 0.3}s`;
+                item.innerHTML = `<span class="text-cyan-500 mr-3">#${i + 1}</span> ${w}`;
+                list.appendChild(item);
+            });
+
+            screen.style.display = 'flex';
+            setInterval(() => spawnConfetti(0, 0, true), 300);
+        }
+    </script>
+</body>
+
+</html>
