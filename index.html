@@ -419,6 +419,30 @@
             border-color: #cc66ff;
         }
 
+        /* NEWバッジ */
+        .new-badge {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: #ffcc00;
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 2px;
+            z-index: 10;
+            box-shadow: 0 0 5px rgba(255, 204, 0, 0.8);
+            letter-spacing: 1px;
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            animation: badge-flicker 2s infinite alternate;
+        }
+
+        @keyframes badge-flicker {
+            from { opacity: 0.8; transform: scale(1); }
+            to { opacity: 1; transform: scale(1.05); }
+        }
+
         /* 戻るボタン等 */
         .result-actions {
             display: flex;
@@ -626,6 +650,19 @@
         let isAnimationSkipped = false;
         let activePullResults = [];
 
+        // 獲得済みキャラの管理（localStorage版）
+        const OBTAINED_KEY = 'gacha_app_obtained_chars';
+        let obtainedChars = new Set(JSON.parse(localStorage.getItem(OBTAINED_KEY) || '[]'));
+
+        function trackCharacter(name) {
+            const isNew = !obtainedChars.has(name);
+            if (isNew) {
+                obtainedChars.add(name);
+                localStorage.setItem(OBTAINED_KEY, JSON.stringify([...obtainedChars]));
+            }
+            return isNew;
+        }
+
         // --- 3. ガチャ抽選ロジック ---
 
         // 配列からランダムに1つ選ぶヘルパー関数
@@ -636,12 +673,14 @@
         // 単発抽選
         function rollSingle() {
             const rand = Math.random() * 100;
-            // 星5: 0.8% * 3体 = 2.4%
-            if (rand < 2.4) return { rarity: 5, data: getRandomItem(CHAR_DB[5]) };
-            // 星4: 合計 5.0% (累計 7.4%) ※10%から5%へ変更
-            if (rand < 7.4) return { rarity: 4, data: getRandomItem(CHAR_DB[4]) };
-            // 星3: 残り (92.6%)
-            return { rarity: 3, data: getRandomItem(CHAR_DB[3]) };
+            let rarity = 3;
+            if (rand < 2.4) rarity = 5;
+            else if (rand < 7.4) rarity = 4;
+
+            const char = getRandomItem(CHAR_DB[rarity]);
+            const isNew = trackCharacter(char.name);
+
+            return { rarity, data: char, isNew };
         }
 
         // 10連抽選
@@ -652,7 +691,9 @@
 
             // 天井判定 (5回連続で外れていれば、今回は星5確定枠を1つ付与)
             if (tenPullPityCount >= 5) {
-                results.push({ rarity: 5, data: getRandomItem(CHAR_DB[5]) });
+                const char = getRandomItem(CHAR_DB[5]);
+                const isNew = trackCharacter(char.name);
+                results.push({ rarity: 5, data: char, isNew });
                 hasStar5 = true;
                 hasStar4OrHigher = true;
                 tenPullPityCount = 0; // 天井リセット
@@ -668,7 +709,9 @@
 
             // 【確定枠処理】すべて星3だった場合、最後の1枠を強制的に星4にする
             if (!hasStar4OrHigher) {
-                results[9] = { rarity: 4, data: getRandomItem(CHAR_DB[4]) };
+                const char = getRandomItem(CHAR_DB[4]);
+                const isNew = trackCharacter(char.name);
+                results[9] = { rarity: 4, data: char, isNew };
             }
 
             // カウントの更新
@@ -919,6 +962,7 @@
                 card.style.animationDelay = `${index * 0.1}s`; // 順番に出現させる
 
                 card.innerHTML = `
+                    ${item.isNew ? '<div class="new-badge">NEW</div>' : ''}
                     <img src="${item.data.img}" class="char-img" alt="${item.data.name}">
                     <div class="char-info">
                         <div class="char-name">${item.data.name}</div>
