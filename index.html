@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gacha Simulator</title>
     <!-- 明朝体とゴシック体をロード -->
-    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -148,7 +150,7 @@
                 const isNew = trackCharacter(char.name);
                 results.push({ rarity: 5, data: char, isNew });
                 hasStar5 = true;
-                hasStar4OrHigher = true;
+                // hasStar4OrHigher はここでは立てず、残りの9枠で別途保障を判定させる
                 tenPullPityCount = 0; // 天井リセット
             }
 
@@ -173,7 +175,7 @@
             } else {
                 tenPullPityCount++;   // 出なかったらカウントアップ
             }
-            
+
             const pityEl = document.getElementById('pity-counter-display');
             if (pityEl) pityEl.innerText = tenPullPityCount;
 
@@ -344,15 +346,19 @@
             starsEl.innerText = starStr;
             starsEl.className = `stars star${item.rarity}`;
 
-            // シルエット状態にする
+            // 一旦クラスを外し、非表示状態で準備
             screen.classList.remove('revealed');
-            screen.style.display = 'flex';
+            screen.style.display = 'none';
             flash.classList.remove('active-whiteout');
 
-            // 1秒後にシルエットを解除（輝かせる）
+            // リフローを強制して確実にシルエット状態から開始させる
             setTimeout(() => {
-                screen.classList.add('revealed');
-            }, 1000);
+                screen.style.display = 'flex';
+                // 1秒後にシルエットを解除（輝かせる）
+                setTimeout(() => {
+                    screen.classList.add('revealed');
+                }, 1000);
+            }, 50);
         }
 
         function nextReveal() {

@@ -11,11 +11,7 @@
 }
 
 body {
-    background-image: url('image/ガチャタイトル画像.png');
-    background-color: #050505;
-    background-size: 90% auto;
-    background-position: 40% center;
-    background-repeat: no-repeat;
+    background-color: #000; /* 基本は真っ暗 */
     margin: 0;
     height: 100vh;
     overflow: hidden;
@@ -31,6 +27,11 @@ body {
     inset: 0;
     width: 100vw;
     height: 100vh;
+    background-image: url('image/ガチャタイトル画像.png');
+    background-color: #050505;
+    background-size: 90% auto;
+    background-position: 40% center;
+    background-repeat: no-repeat;
     transition: opacity 0.5s;
     z-index: 10;
 }
@@ -369,24 +370,29 @@ body {
 
 #reveal-info {
     position: absolute;
-    bottom: 10%;
+    bottom: 0;
+    left: 0;
     width: 100%;
+    padding: 100px 0 50px 0; /* 下部に余裕を持たせる */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     text-align: center;
     color: white;
     opacity: 0;
     transition: opacity 0.5s;
     z-index: 3;
+    pointer-events: none;
 }
 
 #reveal-info h2 {
     font-family: 'Shippori Mincho', serif;
-    font-size: 2.5rem;
+    font-size: 2.8rem; /* 少し大きく */
     margin: 0;
     color: white;
+    letter-spacing: 0.1em;
     text-shadow: 
         2px 2px 0 #000, -2px -2px 0 #000, 
         2px -2px 0 #000, -2px 2px 0 #000,
-        0 0 15px rgba(0,0,0,0.8); /* 巨大な文字に合わせて縁取りを厚く */
+        0px 4px 10px rgba(0,0,0,0.9); /* 縁取りをより濃厚に */
 }
 
 .revealed #reveal-info { opacity: 1; }
