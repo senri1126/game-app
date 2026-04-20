@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacha Simulator</title>
+    <!-- 高級感のある明朝体（セリフ体）とゴシック体をロード -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Noto+Sans+JP:wght@700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        /* =========================================================
+           既存のスタイル（ご提供いただいたコード）
+        ========================================================= */
+        :root {
+            --hsr-gold-bright: #f9e27d;
+            --hsr-gold-mid: #ceae7b;
+            --hsr-gold-dark: #6e5531;
+            --hsr-glow: rgba(206, 174, 123, 0.4);
+        }
+
+        body {
+            /* 背景画像（既存のまま） */
+            background-image: url('image/ガチャタイトル画像.png');
+            background-color: #050505;
+            /* 画像がない場合のフォールバック */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* タイトル画面のコンテナ */
+        #title-screen {
+            position: absolute;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            transition: opacity 0.5s;
+            z-index: 10;
+        }
+
+        /* ガチャボタンを並べるためのコンテナ（新規追加） */
+        .button-group {
+            position: absolute;
+            bottom: 12%;
+            right: 5%;
+            display: flex;
+            gap: 20px;
+            flex-direction: column;
+            /* 縦並びにする場合はcolumn、横ならrow */
+        }
+
+        /* 既存のボタンクラス */
+        .hsr-warp-button {
+            width: 260px;
+            /* 2つ並べるために少しコンパクトに調整 */
+            height: 58px;
+            background: radial-gradient(ellipse at center, rgba(206, 174, 123, 0.35) 0%, rgba(110, 85, 49, 0.25) 70%, transparent 100%);
+            border: 1.2px solid var(--hsr-gold-mid);
+            border-radius: 29px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 12px var(--hsr-glow), inset 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .hsr-warp-button:hover {
+            background: radial-gradient(ellipse at center, rgba(206, 174, 123, 0.5) 0%, rgba(110, 85, 49, 0.35) 100%);
+            box-shadow: 0 0 20px var(--hsr-gold-mid);
+            transform: scale(1.05);
+        }
+
+        .text-main {
+            font-family: 'Shippori Mincho', serif;
+            color: var(--hsr-gold-bright);
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 0.25em;
+            text-shadow: 0 0 10px rgba(249, 226, 125, 0.5);
+            margin-bottom: -1px;
+        }
+
+        .text-sub {
+            font-family: 'Shippori Mincho', serif;
+            color: var(--hsr-gold-mid);
+            font-size: 0.55rem;
+            letter-spacing: 0.4em;
+            font-weight: 700;
+            opacity: 0.8;
+            transform: scaleX(1.1);
+        }
+
+        .hsr-warp-button::before,
+        .hsr-warp-button::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border: 1px solid var(--hsr-gold-mid);
+            transform: rotate(45deg);
+            top: 50%;
+            margin-top: -3px;
+        }
+
+        .hsr-warp-button::before {
+            left: -15px;
+        }
+
+        .hsr-warp-button::after {
+            right: -15px;
+        }
+
+        /* 発射アニメーション */
+        .launching {
+            pointer-events: none;
+            animation: hsr-anti-gravity 0.8s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+        }
+
+        @keyframes hsr-anti-gravity {
+            0% {
+                transform: scale(1) translateY(0);
+                filter: brightness(1) blur(0px);
+            }
+
+            15% {
+                transform: scale(0.9) translateY(40px);
+                filter: brightness(1.2);
+            }
+
+            100% {
+                transform: scale(0.2) translateY(-1500px);
+                filter: brightness(15) blur(10px);
+                opacity: 0;
+            }
+        }
+
+        /* 画面全体の閃光レイヤー */
+        .whiteout {
+            position: fixed;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .active-whiteout {
+            animation: whiteout-anim 0.8s ease-in forwards;
+        }
+
+        @keyframes whiteout-anim {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* =========================================================
+           ここから追加スタイル（演出・結果画面用）
+        ========================================================= */
+        :root {
+            --anim-glow: #00ccff;
+            /* JSで動的に変更 */
+            --anim-bg: #1b2745;
+        }
+
+        /* 演出画面 */
+        #anim-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 50;
+            display: none;
+        }
+
+        .space-stage {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--anim-bg) 0%, #020205 100%);
+            perspective: 1200px;
+            overflow: hidden;
+        }
+
+        .star-line {
+            position: absolute;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9), transparent);
+            height: 2px;
+            opacity: 0;
+            box-shadow: 0 0 5px var(--anim-glow);
+        }
+
+        .warp-active .star-line {
+            animation: warp-move 0.3s linear infinite;
+        }
+
+        @keyframes warp-move {
+            0% {
+                transform: scaleX(0.1) translateZ(-1000px);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scaleX(3) translateZ(1000px);
+                opacity: 0;
+            }
+        }
+
+        .ticket-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        .gacha-ticket {
+            width: 180px;
+            opacity: 0;
+            filter: drop-shadow(0 0 25px var(--anim-glow));
+        }
+
+        .animate-ticket {
+            animation: ticket-soar 3s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+        }
+
+        @keyframes ticket-soar {
+            0% {
+                transform: translate3d(-30vw, 100vh, -1000px) rotateX(60deg) rotateZ(45deg);
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 1;
+                filter: drop-shadow(0 0 20px var(--anim-glow));
+            }
+
+            45% {
+                transform: translate3d(15vw, 15vh, -200px) rotateX(-10deg) rotateY(180deg) rotateZ(-15deg);
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate3d(50vw, -80vh, 800px) rotateX(-50deg) rotateY(360deg) rotateZ(30deg);
+                opacity: 0;
+            }
+        }
+
+        #portal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            box-shadow: 0 0 40px 15px #fff, 0 0 150px 60px var(--anim-glow);
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .portal-expand {
+            animation: portal-grow 1.5s cubic-bezier(0.7, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes portal-grow {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+
+            20% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(300);
+                opacity: 1;
+                filter: brightness(10);
+            }
+        }
+
+        /* 結果画面 */
+        #result-screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #1a1e29 0%, #050608 100%);
+            z-index: 60;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Sans JP', sans-serif;
+            color: white;
+            padding: 20px;
+        }
+
+        /* 1連か10連かでレイアウトを変えるコンテナ */
+        .result-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 800px;
+            /* 140pxのカード5枚分 + 間隔 */
+            margin: 0 auto 40px auto;
+        }
+
+        .char-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.5) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            width: 140px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: card-appear 0.5s forwards;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes card-appear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .char-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: top;
+            z-index: 1;
+        }
+
+        .char-info {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            padding: 8px 0;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+            text-align: center;
+        }
+
+        .char-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px #000;
+            margin-bottom: 2px;
+        }
+
+        .stars {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .star5 {
+            color: #ffcc00;
+            text-shadow: 0 0 5px #ffcc00;
+        }
+
+        .star4 {
+            color: #cc66ff;
+            text-shadow: 0 0 5px #cc66ff;
+        }
+
+        .star3 {
+            color: #44aaff;
+        }
+
+        /* 結果画面専用の星5枠ハイライト */
+        .card-star5 {
+            border-color: #ffcc00;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+        }
+
+        .card-star4 {
+            border-color: #cc66ff;
+        }
+
+        /* 戻るボタン等 */
+        .result-actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn-simple {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Shippori Mincho', serif;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-simple:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* 新規キャラ演出画面 */
+        #reveal-screen {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .reveal-bg-glow {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            animation: rotate-glow 20s linear infinite;
+        }
+
+        @keyframes rotate-glow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #reveal-img {
+            position: relative;
+            max-height: 85vh;
+            filter: brightness(0);
+            transition: filter 1s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+        }
+
+        .revealed #reveal-img {
+            filter: brightness(1);
+        }
+
+        #reveal-info {
+            position: absolute;
+            bottom: 10%;
+            width: 100%;
+            text-align: center;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 3;
+        }
+
+        .revealed #reveal-info {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= 画面1: タイトル画面 ================= -->
+    <div id="title-screen" class="warp-container">
+
+        <!-- デバッグ・確認用の天井カウンタ表示（不要なら削除可） -->
+        <div style="position:absolute; top:20px; left:20px; color:rgba(255,255,255,0.5); font-size:12px;">
+            10連天井カウント(星5未排出): <span id="pity-counter-display">0</span> / 5
+        </div>
+
+        <div class="button-group">
+            <!-- 1回引くボタン -->
+            <div class="hsr-warp-button" onclick="startGachaProcess(1, this)">
+                <span class="text-main">1回引く</span>
+                <span class="text-sub">SINGLE WARP</span>
+            </div>
+
+            <!-- 10回引くボタン -->
+            <div class="hsr-warp-button" onclick="startGachaProcess(10, this)">
+                <span class="text-main">10回引く</span>
+                <span class="text-sub">MULTI WARP (10)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 画面2: 演出画面 ================= -->
+    <div id="anim-screen">
+        <div class="space-stage" id="star-field"></div>
+        <div class="ticket-container">
+            <!-- チケット画像 -->
+            <img id="anim-ticket" src="image/チケット.png" class="gacha-ticket" alt="Ticket">
+        </div>
+        <div id="portal"></div>
+    </div>
+
+    <!-- ================= 画面3: 結果画面 ================= -->
+    <div id="result-screen">
+        <div id="result-cards" class="result-container">
+            <!-- JSでここにカードが生成されます -->
+        </div>
+        <div class="result-actions">
+            <button class="btn-simple" onclick="returnToTitle()">タイトルへ戻る</button>
+        </div>
+    </div>
+
+    <!-- ================= 画面4: 新規キャラ演出 ================= -->
+    <div id="reveal-screen" onclick="nextReveal()">
+        <div class="reveal-bg-glow"></div>
+        <img id="reveal-img" src="" alt="Reveal">
+        <div id="reveal-info">
+            <div id="reveal-stars" class="stars"></div>
+            <h2 id="reveal-name"
+                style="font-family: 'Shippori Mincho', serif; font-size: 2.5rem; margin: 0; text-shadow: 0 0 10px white;">
+            </h2>
+        </div>
+    </div>
+
+    <!-- ホワイトアウト用共通レイヤー -->
+    <div id="flash" class="whiteout"></div>
+
+    <!-- ================= JavaScriptロジック ================= -->
+    <script>
+        // --- 1. キャラクターデータベース ---
+        // ※ imgのURLはご自身の画像URLに書き換えてください。
+        const CHAR_DB = {
+            5: [
+                { name: "アアアア", img: "image/「アアアア」星5.png" },
+                { name: "ドドドド", img: "image/「ドドドド」星5.png" }
+            ],
+            4: [
+                { name: "ササササ", img: "image/「ササササ」星4.png" }
+            ],
+            3: [
+                { name: "カカカカ", img: "image/「カカカカ」星3.png" },
+                { name: "タタタタ", img: "image/「タタタタ」星3.png" }
+            ]
+        };
+
+        // --- 2. 状態管理 ---
+        let tenPullPityCount = 0; // 10連で星5が出なかった回数をカウント
+
+        // --- 3. ガチャ抽選ロジック ---
+
+        // 配列からランダムに1つ選ぶヘルパー関数
+        function getRandomItem(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        // 単発抽選
+        function rollSingle() {
+            const rand = Math.random() * 100;
+            // 星5: 0.8% * 3体 = 2.4%
+            if (rand < 2.4) return { rarity: 5, data: getRandomItem(CHAR_DB[5]) };
+            // 星4: 合計 5.0% (累計 7.4%) ※10%から5%へ変更
+            if (rand < 7.4) return { rarity: 4, data: getRandomItem(CHAR_DB[4]) };
+            // 星3: 残り (92.6%)
+            return { rarity: 3, data: getRandomItem(CHAR_DB[3]) };
+        }
+
+        // 10連抽選
+        function rollTen() {
+            let results = [];
+            let hasStar4OrHigher = false;
+            let hasStar5 = false;
+
+            // 天井判定 (5回連続で外れていれば、今回は星5確定枠を1つ付与)
+            if (tenPullPityCount >= 5) {
+                results.push({ rarity: 5, data: getRandomItem(CHAR_DB[5]) });
+                hasStar5 = true;
+                hasStar4OrHigher = true;
+                tenPullPityCount = 0; // 天井リセット
+            }
+
+            // 残りの枠を抽選
+            while (results.length < 10) {
+                const result = rollSingle();
+                if (result.rarity === 5) hasStar5 = true;
+                if (result.rarity >= 4) hasStar4OrHigher = true;
+                results.push(result);
+            }
+
+            // 【確定枠処理】すべて星3だった場合、最後の1枠を強制的に星4にする
+            if (!hasStar4OrHigher) {
+                results[9] = { rarity: 4, data: getRandomItem(CHAR_DB[4]) };
+            }
+
+            // カウントの更新
+            if (hasStar5) {
+                tenPullPityCount = 0; // 星5が出たらリセット
+            } else {
+                tenPullPityCount++;   // 出なかったらカウントアップ
+            }
+            document.getElementById('pity-counter-display').innerText = tenPullPityCount;
+
+            // 結果をシャッフル（確定枠が常に最初/最後に固まらないように）
+            return results.sort(() => Math.random() - 0.5);
+        }
+
+        // --- 4. メインシーケンス制御 ---
+
+        async function startGachaProcess(times, btnElement) {
+            // ボタンアニメーション発火
+            btnElement.classList.add('launching');
+            const flash = document.getElementById('flash');
+
+            // 1. 抽選の実行
+            let pullResults = [];
+            if (times === 1) {
+                pullResults.push(rollSingle());
+            } else {
+                pullResults = rollTen();
+            }
+
+            // 2. 引いた中での「最高レアリティ」を特定
+            const maxRarity = Math.max(...pullResults.map(item => item.rarity));
+
+            // ホワイトアウトさせてから画面切り替え
+            setTimeout(() => {
+                flash.classList.add('active-whiteout');
+
+                setTimeout(() => {
+                    // タイトルを隠し、アニメーション画面の準備
+                    document.getElementById('title-screen').style.display = 'none';
+                    btnElement.classList.remove('launching'); // 状態戻す
+
+                    // アニメーション実行へ
+                    playIntroAnimation(maxRarity, pullResults);
+                }, 400); // 画面が白くなったタイミングで切り替え
+            }, 600); // ボタンが飛んでいくのを待つ
+        }
+
+        // --- 5. 演出アニメーション ---
+
+        async function playIntroAnimation(maxRarity, pullResults) {
+            const animScreen = document.getElementById('anim-screen');
+            const flash = document.getElementById('flash');
+            const ticket = document.getElementById('anim-ticket');
+            const portal = document.getElementById('portal');
+            const starField = document.getElementById('star-field');
+
+            // レアリティに応じた色の設定
+            let glowColor, bgAccent;
+            if (maxRarity === 5) { glowColor = '#ffd700'; bgAccent = '#3a2b00'; }
+            else if (maxRarity === 4) { glowColor = '#c724b1'; bgAccent = '#2a0845'; }
+            else { glowColor = '#00a8ff'; bgAccent = '#091e3b'; }
+
+            document.documentElement.style.setProperty('--anim-glow', glowColor);
+            document.documentElement.style.setProperty('--anim-bg', bgAccent);
+
+            // ホワイトアウト解除し、アニメーション画面表示
+            animScreen.style.display = 'block';
+            flash.classList.remove('active-whiteout');
+
+            // 星の生成
+            starField.innerHTML = '';
+            for (let i = 0; i < 60; i++) {
+                const s = document.createElement('div');
+                s.className = 'star-line';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.width = (Math.random() * 200 + 100) + 'px';
+                s.style.animationDelay = (Math.random() * 0.4) + 's';
+                starField.appendChild(s);
+            }
+
+            // --- アニメーション再生 ---
+            // 1. チケット舞う
+            ticket.classList.add('animate-ticket');
+            await wait(1800);
+
+            // 2. ワープ加速
+            starField.classList.add('warp-active');
+            await wait(800);
+
+            // 3. ポータル爆発
+            portal.classList.add('portal-expand');
+            await wait(1200);
+
+            // 4. ホワイトアウトして結果画面へ
+            flash.classList.add('active-whiteout');
+            await wait(600);
+
+            // クリーンアップ
+            animScreen.style.display = 'none';
+            ticket.classList.remove('animate-ticket');
+            starField.classList.remove('warp-active');
+            portal.classList.remove('portal-expand');
+
+            // 新規キャラ演出シーケンスへ
+            startRevealSequence(pullResults);
+        }
+
+        // --- 6. 新規キャラ演出シーケンス ---
+        let pendingResults = [];
+        let revealQueue = [];
+        let currentRevealIndex = 0;
+
+        async function startRevealSequence(results) {
+            pendingResults = results;
+            // 星4か星5を演出対象とする（新規取得シミュレーション）
+            revealQueue = results.filter(item => item.rarity >= 4);
+            currentRevealIndex = 0;
+
+            if (revealQueue.length > 0) {
+                showNextReveal();
+            } else {
+                showResultScreen(pendingResults);
+            }
+        }
+
+        function showNextReveal() {
+            const item = revealQueue[currentRevealIndex];
+            const screen = document.getElementById('reveal-screen');
+            const img = document.getElementById('reveal-img');
+            const nameEl = document.getElementById('reveal-name');
+            const starsEl = document.getElementById('reveal-stars');
+            const flash = document.getElementById('flash');
+
+            // 演出のセットアップ
+            img.src = item.data.img;
+            nameEl.innerText = item.data.name;
+            let starStr = "";
+            for (let i = 0; i < item.rarity; i++) starStr += "✦";
+            starsEl.innerText = starStr;
+            starsEl.className = `stars star${item.rarity}`;
+
+            // シルエット状態にする
+            screen.classList.remove('revealed');
+            screen.style.display = 'flex';
+            flash.classList.remove('active-whiteout');
+
+            // 1秒後にシルエットを解除（輝かせる）
+            setTimeout(() => {
+                screen.classList.add('revealed');
+            }, 1000);
+        }
+
+        function nextReveal() {
+            const screen = document.getElementById('reveal-screen');
+            // シルエット解除前はクリック無効（お好みで即時解除も可能）
+            if (!screen.classList.contains('revealed')) return;
+
+            currentRevealIndex++;
+            if (currentRevealIndex < revealQueue.length) {
+                // 次のレアキャラがいれば表示
+                showNextReveal();
+            } else {
+                // 全員表示し終えたらリザルト画面へ
+                screen.style.display = 'none';
+                showResultScreen(pendingResults);
+            }
+        }
+
+        // --- 7. 結果画面の構築 ---
+
+        function showResultScreen(results) {
+            const resultScreen = document.getElementById('result-screen');
+            const container = document.getElementById('result-cards');
+            const flash = document.getElementById('flash');
+
+            container.innerHTML = ''; // クリア
+
+            results.forEach((item, index) => {
+                // 星の文字列生成 (✦✦✦✦✦)
+                let starsHTML = '';
+                for (let i = 0; i < item.rarity; i++) { starsHTML += '✦'; }
+
+                // カードDOM生成
+                const card = document.createElement('div');
+                card.className = `char-card card-star${item.rarity}`;
+                card.style.animationDelay = `${index * 0.1}s`; // 順番に出現させる
+
+                card.innerHTML = `
+                    <img src="${item.data.img}" class="char-img" alt="${item.data.name}">
+                    <div class="char-info">
+                        <div class="char-name">${item.data.name}</div>
+                        <div class="stars star${item.rarity}">${starsHTML}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            resultScreen.style.display = 'flex';
+
+            // ホワイトアウト解除
+            setTimeout(() => {
+                flash.classList.remove('active-whiteout');
+            }, 100);
+        }
+
+        // タイトルへ戻る処理
+        function returnToTitle() {
+            const flash = document.getElementById('flash');
+            flash.classList.add('active-whiteout');
+
+            setTimeout(() => {
+                document.getElementById('result-screen').style.display = 'none';
+                document.getElementById('title-screen').style.display = 'block';
+
+                setTimeout(() => {
+                    flash.classList.remove('active-whiteout');
+                }, 100);
+            }, 600);
+        }
+
+        function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    </script>
+</body>
+
+</html>
