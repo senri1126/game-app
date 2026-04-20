@@ -280,7 +280,16 @@ body {
     text-align: center;
 }
 
-.char-name { font-size: 0.9rem; font-weight: 700; text-shadow: 1px 1px 2px #000; margin-bottom: 2px; }
+.char-name { 
+    font-size: 0.9rem; 
+    font-weight: 700; 
+    color: white;
+    text-shadow: 
+        1px 1px 0 #000, -1px -1px 0 #000, 
+        1px -1px 0 #000, -1px 1px 0 #000,
+        0 0 5px #000; /* 縁取りを強化 */
+    margin-bottom: 2px; 
+}
 .stars { font-size: 1.1rem; letter-spacing: 2px; }
 .star5 { color: #ffcc00; text-shadow: 0 0 5px #ffcc00; }
 .star4 { color: #cc66ff; text-shadow: 0 0 5px #cc66ff; }
@@ -367,6 +376,17 @@ body {
     opacity: 0;
     transition: opacity 0.5s;
     z-index: 3;
+}
+
+#reveal-info h2 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 2.5rem;
+    margin: 0;
+    color: white;
+    text-shadow: 
+        2px 2px 0 #000, -2px -2px 0 #000, 
+        2px -2px 0 #000, -2px 2px 0 #000,
+        0 0 15px rgba(0,0,0,0.8); /* 巨大な文字に合わせて縁取りを厚く */
 }
 
 .revealed #reveal-info { opacity: 1; }

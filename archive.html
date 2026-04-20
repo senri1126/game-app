@@ -64,6 +64,25 @@
             transform: scale(1.05);
         }
 
+        .btn-reset {
+            background: rgba(255, 50, 50, 0.1);
+            border: 1px solid rgba(255, 50, 50, 0.5);
+            color: #ff8888;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Shippori Mincho', serif;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-right: 15px;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 50, 50, 0.3);
+            color: #ffaaaa;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+
         .collection-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -177,7 +196,10 @@
 
     <div class="archive-header">
         <h1 class="archive-title">CHARACTER ARCHIVE</h1>
-        <a href="index.html" class="btn-back">タイトルへ戻る</a>
+        <div>
+            <button class="btn-reset" onclick="resetCollection()">リセット</button>
+            <a href="index.html" class="btn-back">タイトルへ戻る</a>
+        </div>
     </div>
 
     <div id="collection-grid" class="collection-grid">
@@ -273,6 +295,14 @@
 
         function closeDetail() {
             document.getElementById('detail-modal').style.display = 'none';
+        }
+
+        function resetCollection() {
+            if (confirm('図鑑の獲得記録をすべてリセットしますか？\nこの操作は取り消せません。')) {
+                localStorage.removeItem(OBTAINED_KEY);
+                alert('図鑑をリセットしました。');
+                location.reload(); // リロードして表示を更新
+            }
         }
 
         window.onload = initArchive;
