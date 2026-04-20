@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排出確率 - ガチャシミュレーター</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Shippori+Mincho:wght@700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --hsr-gold-bright: #f9e27d;
+            --hsr-gold-mid: #ceae7b;
+            --hsr-glow: rgba(206, 174, 123, 0.4);
+        }
+
+        body {
+            background-color: #050608;
+            background-image: radial-gradient(circle at center, #1b202e 0%, #050608 100%);
+            color: white;
+            margin: 0;
+            padding: 40px 20px;
+            font-family: 'Noto Sans JP', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(206, 174, 123, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-family: 'Shippori Mincho', serif;
+            color: var(--hsr-gold-bright);
+            text-align: center;
+            border-bottom: 2px solid var(--hsr-gold-mid);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            letter-spacing: 0.1em;
+        }
+
+        .rate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .rate-table th,
+        .rate-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rate-table th {
+            color: var(--hsr-gold-mid);
+            font-family: 'Shippori Mincho', serif;
+        }
+
+        .rarity-5 {
+            color: #ffcc00;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ffcc00;
+        }
+
+        .rarity-4 {
+            color: #cc66ff;
+            font-weight: bold;
+        }
+
+        .rarity-3 {
+            color: #44aaff;
+        }
+
+        .rules {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .rules h2 {
+            font-size: 1.1rem;
+            color: var(--hsr-gold-mid);
+            margin-top: 0;
+        }
+
+        .btn-back {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 40px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Shippori Mincho', serif;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>WARP PROBABILITY</h1>
+
+        <table class="rate-table">
+            <thead>
+                <tr>
+                    <th>レアリティ</th>
+                    <th>排出率</th>
+                    <th>備考</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="rarity-5">✦✦✦✦✦ (星5)</td>
+                    <td>2.4%</td>
+                    <td>最高レアリティ</td>
+                </tr>
+                <tr>
+                    <td class="rarity-4">✦✦✦✦ (星4)</td>
+                    <td>5.0%</td>
+                    <td>10連で1枠確定(※)</td>
+                </tr>
+                <tr>
+                    <td class="rarity-3">✦✦✦ (星3)</td>
+                    <td>92.6%</td>
+                    <td>通常レアリティ</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="rules">
+            <h2>ガチャのルール</h2>
+            <ul>
+                <li><strong>10連星4確定：</strong>10連ガチャを行った際、10枠のうち少なくとも1枠は星4以上のキャラクターが確定で出現します。</li>
+                <li><strong>天井システム：</strong>10連ガチャを5回連続で星5キャラクターが出現せずに終えた場合、次の10連ガチャ（60連目）の最初の1枠が必ず星5キャラクターになります。</li>
+                <li><strong>天井と保障の併用：</strong>星5天井が発動した際でも、残りの9枠に対して「10連星4確定」のルールが別途適用されます。（確定星5 ＋ 確定星4以上の2枠が保証されます）
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <a href="index.html" class="btn-back">タイトルへ戻る</a>
+
+</body>
+
+</html>
