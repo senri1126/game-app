@@ -21,12 +21,11 @@
         }
 
         body {
-            /* 背景画像（既存のまま） */
+            /* 背景画像：少し引き（110%）にし、中央よりやや左（40%）に配置 */
             background-image: url('image/ガチャタイトル画像.png');
             background-color: #050505;
-            /* 画像がない場合のフォールバック */
-            background-size: cover;
-            background-position: center;
+            background-size: 90% auto;
+            background-position: 40% center;
             background-repeat: no-repeat;
             margin: 0;
             height: 100vh;
@@ -346,6 +345,13 @@
             transform: translateY(20px);
             animation: card-appear 0.5s forwards;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            cursor: pointer; /* タッチ可能であることを示す */
+            transition: transform 0.2s;
+        }
+
+        .char-card:hover {
+            transform: scale(1.05) translateY(-5px);
+            z-index: 5;
         }
 
         @keyframes card-appear {
@@ -361,8 +367,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            object-position: top;
+            /* 上半身を強調するため、拡大(cover)して上部を基準に配置 */
+            object-fit: cover;
+            object-position: top center;
             z-index: 1;
         }
 
@@ -383,7 +390,8 @@
         }
 
         .stars {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
+            /* 前回の0.8remから大きく */
             letter-spacing: 2px;
         }
 
@@ -468,7 +476,8 @@
 
         #reveal-img {
             position: relative;
-            max-height: 85vh;
+            max-height: 95vh;
+            /* 前回の85vhから大きく */
             filter: brightness(0);
             transition: filter 1s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 2;
@@ -491,6 +500,34 @@
 
         .revealed #reveal-info {
             opacity: 1;
+        }
+
+        #reveal-stars {
+            font-size: 2.5rem !important;
+            /* 出現時の星を大きく */
+            margin-bottom: 10px;
+        }
+
+        /* スキップボタン */
+        .skip-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 150;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .skip-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
         }
     </style>
 </head>
@@ -522,6 +559,7 @@
 
     <!-- ================= 画面2: 演出画面 ================= -->
     <div id="anim-screen">
+        <button class="skip-btn" onclick="skipEffect()">SKIP</button>
         <div class="space-stage" id="star-field"></div>
         <div class="ticket-container">
             <!-- チケット画像 -->
@@ -585,6 +623,8 @@
 
         // --- 2. 状態管理 ---
         let tenPullPityCount = 0; // 10連で星5が出なかった回数をカウント
+        let isAnimationSkipped = false;
+        let activePullResults = [];
 
         // --- 3. ガチャ抽選ロジック ---
 
@@ -710,31 +750,66 @@
                 starField.appendChild(s);
             }
 
+            activePullResults = pullResults;
+            isAnimationSkipped = false;
+
             // --- アニメーション再生 ---
             // 1. チケット舞う
             ticket.classList.add('animate-ticket');
-            await wait(1800);
+            if (await smartWait(1800)) return;
 
             // 2. ワープ加速
             starField.classList.add('warp-active');
-            await wait(800);
+            if (await smartWait(800)) return;
 
             // 3. ポータル爆発
             portal.classList.add('portal-expand');
-            await wait(1200);
+            if (await smartWait(1200)) return;
 
             // 4. ホワイトアウトして結果画面へ
             flash.classList.add('active-whiteout');
-            await wait(600);
+            if (await smartWait(600)) return;
 
             // クリーンアップ
+            finishAnimation();
+        }
+
+        // スキップ対応の待機関数
+        async function smartWait(ms) {
+            return new Promise(resolve => {
+                const check = setInterval(() => {
+                    if (isAnimationSkipped) {
+                        clearInterval(check);
+                        resolve(true); // スキップされた
+                    }
+                }, 50);
+                setTimeout(() => {
+                    clearInterval(check);
+                    resolve(false); // 時間通り終了
+                }, ms);
+            });
+        }
+
+        function skipEffect() {
+            isAnimationSkipped = true;
+            finishAnimation();
+        }
+
+        function finishAnimation() {
+            const animScreen = document.getElementById('anim-screen');
+            const flash = document.getElementById('flash');
+            const ticket = document.getElementById('anim-ticket');
+            const starField = document.getElementById('star-field');
+            const portal = document.getElementById('portal');
+
             animScreen.style.display = 'none';
             ticket.classList.remove('animate-ticket');
             starField.classList.remove('warp-active');
             portal.classList.remove('portal-expand');
+            flash.classList.remove('active-whiteout');
 
             // 新規キャラ演出シーケンスへ
-            startRevealSequence(pullResults);
+            startRevealSequence(activePullResults);
         }
 
         // --- 6. 新規キャラ演出シーケンス ---
@@ -784,8 +859,14 @@
 
         function nextReveal() {
             const screen = document.getElementById('reveal-screen');
-            // シルエット解除前はクリック無効（お好みで即時解除も可能）
             if (!screen.classList.contains('revealed')) return;
+
+            // プレビューモード（リザルトからの個別表示）の場合は閉じるだけ
+            if (screen.classList.contains('preview-mode')) {
+                screen.style.display = 'none';
+                screen.classList.remove('preview-mode');
+                return;
+            }
 
             currentRevealIndex++;
             if (currentRevealIndex < revealQueue.length) {
@@ -796,6 +877,26 @@
                 screen.style.display = 'none';
                 showResultScreen(pendingResults);
             }
+        }
+
+        // リザルト画面から個別に詳細を表示する関数
+        function showCharacterDetail(item) {
+            const screen = document.getElementById('reveal-screen');
+            const img = document.getElementById('reveal-img');
+            const nameEl = document.getElementById('reveal-name');
+            const starsEl = document.getElementById('reveal-stars');
+
+            img.src = item.data.img;
+            nameEl.innerText = item.data.name;
+            let starStr = "";
+            for (let i = 0; i < item.rarity; i++) starStr += "✦";
+            starsEl.innerText = starStr;
+            starsEl.className = `stars star${item.rarity}`;
+
+            // 即座に表示（シルエットなし・フラグセット）
+            screen.classList.add('revealed');
+            screen.classList.add('preview-mode');
+            screen.style.display = 'flex';
         }
 
         // --- 7. 結果画面の構築 ---
@@ -824,6 +925,9 @@
                         <div class="stars star${item.rarity}">${starsHTML}</div>
                     </div>
                 `;
+                // クリック時に詳細表示（全身表示）
+                card.onclick = () => showCharacterDetail(item);
+
                 container.appendChild(card);
             });
 
