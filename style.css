@@ -11,7 +11,8 @@
 }
 
 body {
-    background-color: #000; /* 基本は真っ暗 */
+    background-color: #000;
+    /* 基本は真っ暗 */
     margin: 0;
     height: 100vh;
     overflow: hidden;
@@ -21,7 +22,6 @@ body {
     font-family: 'Noto Sans JP', sans-serif;
 }
 
-/* タイトル画面 */
 #title-screen {
     position: absolute;
     inset: 0;
@@ -30,7 +30,7 @@ body {
     background-image: url('image/ガチャタイトル画像.png');
     background-color: #050505;
     background-size: 90% auto;
-    background-position: 40% center;
+    background-position: 40% 80%; /* 数値を大きくして画像を上に押し上げる */
     background-repeat: no-repeat;
     transition: opacity 0.5s;
     z-index: 10;
@@ -100,8 +100,13 @@ body {
     margin-top: -3px;
 }
 
-.hsr-warp-button::before { left: -15px; }
-.hsr-warp-button::after { right: -15px; }
+.hsr-warp-button::before {
+    left: -15px;
+}
+
+.hsr-warp-button::after {
+    right: -15px;
+}
 
 .archive-link-btn {
     position: absolute;
@@ -182,9 +187,19 @@ body {
 }
 
 @keyframes warp-move {
-    0% { transform: scaleX(0.1) translateZ(-1000px); opacity: 0; }
-    50% { opacity: 0.8; }
-    100% { transform: scaleX(3) translateZ(1000px); opacity: 0; }
+    0% {
+        transform: scaleX(0.1) translateZ(-1000px);
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scaleX(3) translateZ(1000px);
+        opacity: 0;
+    }
 }
 
 .ticket-container {
@@ -207,11 +222,29 @@ body {
 }
 
 @keyframes ticket-soar {
-    0% { transform: translate3d(-30vw, 100vh, -1000px) rotateX(60deg) rotateZ(45deg); opacity: 0; }
-    15% { opacity: 1; filter: drop-shadow(0 0 20px var(--anim-glow)); }
-    45% { transform: translate3d(15vw, 15vh, -200px) rotateX(-10deg) rotateY(180deg) rotateZ(-15deg); opacity: 1; }
-    80% { opacity: 1; }
-    100% { transform: translate3d(50vw, -80vh, 800px) rotateX(-50deg) rotateY(360deg) rotateZ(30deg); opacity: 0; }
+    0% {
+        transform: translate3d(-30vw, 100vh, -1000px) rotateX(60deg) rotateZ(45deg);
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 1;
+        filter: drop-shadow(0 0 20px var(--anim-glow));
+    }
+
+    45% {
+        transform: translate3d(15vw, 15vh, -200px) rotateX(-10deg) rotateY(180deg) rotateZ(-15deg);
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate3d(50vw, -80vh, 800px) rotateX(-50deg) rotateY(360deg) rotateZ(30deg);
+        opacity: 0;
+    }
 }
 
 #portal {
@@ -233,9 +266,21 @@ body {
 }
 
 @keyframes portal-grow {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    20% { transform: translate(-50%, -50%) scale(2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(300); opacity: 1; filter: brightness(10); }
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    20% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(300);
+        opacity: 1;
+        filter: brightness(10);
+    }
 }
 
 /* 結果画面 */
@@ -281,9 +326,17 @@ body {
     transition: transform 0.2s;
 }
 
-.char-card:hover { transform: scale(1.05) translateY(-5px); z-index: 5; }
+.char-card:hover {
+    transform: scale(1.05) translateY(-5px);
+    z-index: 5;
+}
 
-@keyframes card-appear { to { opacity: 1; transform: translateY(0); } }
+@keyframes card-appear {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 .char-img {
     position: absolute;
@@ -305,23 +358,45 @@ body {
     text-align: center;
 }
 
-.char-name { 
-    font-size: 0.9rem; 
-    font-weight: 700; 
+.char-name {
+    font-size: 0.9rem;
+    font-weight: 700;
     color: white;
-    text-shadow: 
-        1px 1px 0 #000, -1px -1px 0 #000, 
+    text-shadow:
+        1px 1px 0 #000, -1px -1px 0 #000,
         1px -1px 0 #000, -1px 1px 0 #000,
-        0 0 5px #000; /* 縁取りを強化 */
-    margin-bottom: 2px; 
+        0 0 5px #000;
+    /* 縁取りを強化 */
+    margin-bottom: 2px;
 }
-.stars { font-size: 1.1rem; letter-spacing: 2px; }
-.star5 { color: #ffcc00; text-shadow: 0 0 5px #ffcc00; }
-.star4 { color: #cc66ff; text-shadow: 0 0 5px #cc66ff; }
-.star3 { color: #44aaff; }
 
-.card-star5 { border-color: #ffcc00; box-shadow: 0 0 15px rgba(255, 204, 0, 0.4); }
-.card-star4 { border-color: #cc66ff; }
+.stars {
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.star5 {
+    color: #ffcc00;
+    text-shadow: 0 0 5px #ffcc00;
+}
+
+.star4 {
+    color: #cc66ff;
+    text-shadow: 0 0 5px #cc66ff;
+}
+
+.star3 {
+    color: #44aaff;
+}
+
+.card-star5 {
+    border-color: #ffcc00;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+}
+
+.card-star4 {
+    border-color: #cc66ff;
+}
 
 .new-badge {
     position: absolute;
@@ -342,8 +417,15 @@ body {
 }
 
 @keyframes badge-flicker {
-    from { opacity: 0.8; transform: scale(1); }
-    to { opacity: 1; transform: scale(1.05); }
+    from {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1.05);
+    }
 }
 
 .btn-simple {
@@ -358,7 +440,10 @@ body {
     transition: 0.3s;
 }
 
-.btn-simple:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+.btn-simple:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
 
 /* 詳細表示画面 */
 #reveal-screen {
@@ -390,14 +475,17 @@ body {
     z-index: 2;
 }
 
-.revealed #reveal-img { filter: brightness(1); }
+.revealed #reveal-img {
+    filter: brightness(1);
+}
 
 #reveal-info {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 100px 0 50px 0; /* 下部に余裕を持たせる */
+    padding: 100px 0 50px 0;
+    /* 下部に余裕を持たせる */
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     text-align: center;
     color: white;
@@ -409,17 +497,21 @@ body {
 
 #reveal-info h2 {
     font-family: 'Shippori Mincho', serif;
-    font-size: 2.8rem; /* 少し大きく */
+    font-size: 2.8rem;
+    /* 少し大きく */
     margin: 0;
     color: white;
     letter-spacing: 0.1em;
-    text-shadow: 
-        2px 2px 0 #000, -2px -2px 0 #000, 
+    text-shadow:
+        2px 2px 0 #000, -2px -2px 0 #000,
         2px -2px 0 #000, -2px 2px 0 #000,
-        0px 4px 10px rgba(0,0,0,0.9); /* 縁取りをより濃厚に */
+        0px 4px 10px rgba(0, 0, 0, 0.9);
+    /* 縁取りをより濃厚に */
 }
 
-.revealed #reveal-info { opacity: 1; }
+.revealed #reveal-info {
+    opacity: 1;
+}
 
 #reveal-stars {
     font-size: 2.5rem !important;
@@ -441,7 +533,10 @@ body {
     transition: 0.3s;
 }
 
-.skip-btn:hover { background: rgba(255, 255, 255, 0.2); border-color: white; }
+.skip-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: white;
+}
 
 /* 共通パーツ */
 .whiteout {
@@ -453,6 +548,26 @@ body {
     z-index: 9999;
 }
 
-.active-whiteout { animation: whiteout-anim 0.8s ease-in forwards; }
-@keyframes whiteout-anim { 0% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes rotate-glow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.active-whiteout {
+    animation: whiteout-anim 0.8s ease-in forwards;
+}
+
+@keyframes whiteout-anim {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes rotate-glow {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
