@@ -381,6 +381,7 @@
             img.classList.remove('char-breathing', 'char-altair-breathing', 'char-sam-breathing', 'char-dragon-breathing');
             const fxLayer = document.getElementById('detail-fx');
             fxLayer.className = '';
+            fxLayer.innerHTML = ''; // 前回の動的生成DOMをクリア
 
             clearSamTimer();
             if (item.data.name.includes('サム')) {
@@ -411,11 +412,70 @@
                 }, 100);
             } else if (item.data.name.includes('ホーリードラゴン')) {
                 img.classList.add('char-dragon-breathing');
+                fxLayer.classList.add('dragon-fx');
+
+                const shockwave = document.createElement('div');
+                shockwave.className = 'dragon-shockwave';
+                fxLayer.appendChild(shockwave);
+
+                for (let i = 0; i < 20; i++) {
+                    const meteor = document.createElement('img');
+                    meteor.className = 'dragon-meteor';
+                    meteor.src = i % 2 === 0 ? 'image/隕石.png' : 'image/隕石2.png';
+                    meteor.style.left = `${Math.random() * 120 - 10}%`;
+                    meteor.style.animationDelay = `${Math.random() * 1.5}s`;
+                    meteor.style.setProperty('--meteor-scale', 0.5 + Math.random() * 1.5);
+                    fxLayer.appendChild(meteor);
+                }
             } else if (item.data.name.includes('アルタイル')) {
                 img.classList.add('char-altair-breathing');
                 fxLayer.classList.add('altair-fx');
                 bgImg.src = 'image/アルタイル背景.png';
                 bgImg.style.display = 'block';
+
+                // アルタイル専用：パス置換
+                const firstImgSrc = item.data.img; 
+                const secondImgSrc = 'image/「【銀河の妖狐】アルタイル2」.png';
+
+                const preload = new Image();
+                preload.src = secondImgSrc;
+
+                const afterAnim1 = document.createElement('img');
+                afterAnim1.className = 'altair-afterimage altair-afterimage-1';
+                afterAnim1.src = firstImgSrc;
+                fxLayer.appendChild(afterAnim1);
+
+                const afterAnim2 = document.createElement('img');
+                afterAnim2.className = 'altair-afterimage altair-afterimage-2';
+                afterAnim2.src = secondImgSrc;
+                fxLayer.appendChild(afterAnim2);
+
+                const attackFx = document.createElement('img');
+                attackFx.className = 'altair-charge-img';
+                attackFx.src = 'image/アルタイルエフェクト.png';
+                fxLayer.appendChild(attackFx);
+
+                const pillarFx = document.createElement('div');
+                pillarFx.className = 'altair-fire-pillar';
+                fxLayer.appendChild(pillarFx);
+
+                const startTime = Date.now();
+                samImageTimer = setInterval(() => {
+                    const elapsed = (Date.now() - startTime) % 10000;
+                    if (elapsed > 6400 && elapsed < 8500) {
+                        if (!img.src.includes('アルタイル2')) {
+                            img.style.opacity = '0';
+                            img.src = secondImgSrc;
+                            setTimeout(() => img.style.opacity = '1', 50);
+                        }
+                    } else {
+                        if (img.src.includes('アルタイル2')) {
+                            img.style.opacity = '0';
+                            img.src = firstImgSrc;
+                            setTimeout(() => img.style.opacity = '1', 50);
+                        }
+                    }
+                }, 100);
             } else if (item.rarity === 5) {
                 img.classList.add('char-breathing');
             }

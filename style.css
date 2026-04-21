@@ -30,7 +30,8 @@ body {
     background-image: url('image/ガチャタイトル画像.png');
     background-color: #050505;
     background-size: 90% auto;
-    background-position: 40% 80%; /* 数値を大きくして画像を上に押し上げる */
+    background-position: 40% 80%;
+    /* 数値を大きくして画像を上に押し上げる */
     background-repeat: no-repeat;
     transition: opacity 0.5s;
     z-index: 10;
@@ -485,13 +486,15 @@ body {
     z-index: 2;
 }
 
-#reveal-bg-img, #detail-bg-img {
+#reveal-bg-img,
+#detail-bg-img {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     max-height: 95vh;
-    z-index: 1; /* 本体の後ろ */
+    z-index: 1;
+    /* 本体の後ろ */
     pointer-events: none;
 }
 
@@ -503,12 +506,14 @@ body {
     transition: filter 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.revealed #reveal-img, .revealed #reveal-bg-img {
+.revealed #reveal-img,
+.revealed #reveal-bg-img {
     filter: brightness(1);
 }
 
 /* 図鑑は最初からシルエットなし */
-#detail-img, #detail-bg-img {
+#detail-img,
+#detail-bg-img {
     filter: brightness(1);
 }
 
@@ -521,9 +526,11 @@ body {
     0% {
         transform: scale(1) translateY(0);
     }
+
     50% {
         transform: scale(1.03) translateY(-10px);
     }
+
     100% {
         transform: scale(1) translateY(0);
     }
@@ -535,46 +542,70 @@ body {
 }
 
 @keyframes altair-action {
+
     /* 1回目の呼吸（ゆっくり） */
-    0%, 100% { transform: scale(1) translateY(0); filter: brightness(1) drop-shadow(0 0 0 transparent); }
-    15% { transform: scale(1.04) translateY(-10px); }
-    30% { transform: scale(1) translateY(0); }
-    
+    0%,
+    100% {
+        transform: scale(1) translateY(0);
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+
+    15% {
+        transform: scale(1.04) translateY(-10px);
+    }
+
+    30% {
+        transform: scale(1) translateY(0);
+    }
+
     /* 2回目の呼吸（ゆっくり） */
-    45% { transform: scale(1.04) translateY(-10px); }
-    60% { transform: scale(1) translateY(0); }
-    
+    45% {
+        transform: scale(1.04) translateY(-10px);
+    }
+
+    60% {
+        transform: scale(1) translateY(0);
+    }
+
     /* 溜め（より深く沈み込み、強烈な銀河のオーラを纏う） */
-    64% { 
-        transform: scale(0.92) translateY(15px); 
-        filter: brightness(1.5) sepia(0.3) hue-rotate(-20deg) drop-shadow(0 0 30px #00aaff) drop-shadow(0 0 50px #9900ff); 
+    64% {
+        transform: scale(0.92) translateY(15px);
+        filter: brightness(1.5) sepia(0.3) hue-rotate(-20deg) drop-shadow(0 0 30px #00aaff) drop-shadow(0 0 50px #9900ff);
     }
-    
+
     /* 解放（爆発的な蒼炎と紫電の広がり） */
-    68% { 
-        transform: scale(1.18) translateY(-45px); 
-        filter: brightness(2.5) drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 80px #0044ff) drop-shadow(0 0 120px #ff00ff); 
+    68% {
+        transform: scale(1.18) translateY(-45px);
+        filter: brightness(2.5) drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 80px #0044ff) drop-shadow(0 0 120px #ff00ff);
     }
-    
+
     /* 戻り */
-    85% { transform: scale(1.02) translateY(0); filter: brightness(1.1); }
+    85% {
+        transform: scale(1.02) translateY(0);
+        filter: brightness(1.1);
+    }
 }
 
 /* アルタイル専用：狐火エフェクト */
-#reveal-fx.altair-fx, #detail-fx.altair-fx {
+#reveal-fx.altair-fx,
+#detail-fx.altair-fx {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 100; /* 最前面へ */
+    z-index: 100;
+    /* 最前面へ */
 }
 
-#reveal-fx.altair-fx::before, #reveal-fx.altair-fx::after,
-#detail-fx.altair-fx::before, #detail-fx.altair-fx::after {
+#reveal-fx.altair-fx::before,
+#reveal-fx.altair-fx::after,
+#detail-fx.altair-fx::before,
+#detail-fx.altair-fx::after {
     content: "";
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 60px; /* さらに大きく */
+    width: 60px;
+    /* さらに大きく */
     height: 90px;
     background: radial-gradient(circle at 30% 30%, #ffffff 0%, #00ffff 40%, #0044ff 80%, transparent 100%);
     border-radius: 50% 50% 30% 30%;
@@ -584,203 +615,565 @@ body {
 }
 
 /* 1つ目の狐火（左から手前へ） */
-#reveal-fx.altair-fx::before, #detail-fx.altair-fx::before {
+#reveal-fx.altair-fx::before,
+#detail-fx.altair-fx::before {
     animation: fox-fire-1 10s ease-in-out infinite;
 }
 
 /* 2つ目の狐火（右から手前へ） */
-#reveal-fx.altair-fx::after, #detail-fx.altair-fx::after {
+#reveal-fx.altair-fx::after,
+#detail-fx.altair-fx::after {
     animation: fox-fire-2 10s ease-in-out infinite;
 }
 
 @keyframes fox-fire-1 {
-    0%, 66% { opacity: 0; transform: translate(-50%, -50%) scale(0.1); }
-    68% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.5) translate(-50px, -50px); }
-    75% { opacity: 0; transform: translate(-50%, -50%) scale(15) translate(-300px, 200px); }
-    100% { opacity: 0; }
+
+    0%,
+    66% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.1);
+    }
+
+    68% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(0.5) translate(-50px, -50px);
+    }
+
+    75% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(15) translate(-300px, 200px);
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 @keyframes fox-fire-2 {
-    0%, 68% { opacity: 0; transform: translate(-50%, -50%) scale(0.1); }
-    70% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.5) translate(50px, -50px); }
-    77% { opacity: 0; transform: translate(-50%, -50%) scale(18) translate(350px, 250px); }
-    100% { opacity: 0; }
-}
 
-/* サム専用：超豪華版テレポートと黄金の激突 */
-.char-sam-breathing {
-    animation: sam-action 8s ease-in-out infinite; /* 少しテンポアップ */
-}
+        0%,
+        68% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.1);
+        }
 
-@keyframes sam-action {
-    0%, 30% { transform: scale(1) translateY(0); opacity: 1; filter: brightness(1) drop-shadow(0 0 0 transparent); }
-    15% { transform: scale(1.05) translateY(-10px); }
-    
-    /* 溜め（エネルギー凝縮） */
-    45% { transform: scale(0.95) translateY(5px); filter: brightness(1.3) drop-shadow(0 0 20px #ffcc00); }
-    
-    /* 極大消失（テレポート） */
-    50% { transform: scale(5) translateY(-200px); opacity: 0; filter: brightness(5); }
-    
-    /* 黄金の再突入（超スピード） */
-    65% { transform: scale(0.1); opacity: 0; }
-    68% { 
-        transform: scale(1.8) translateY(0); 
-        opacity: 1; 
-        filter: brightness(2) drop-shadow(0 0 50px #ffd700) drop-shadow(0 0 100px #ffaa00) drop-shadow(0 0 150px #ff4400); 
+        70% {
+            opacity: 0.8;
+            transform: translate(-50%, -50%) scale(0.5) translate(50px, -50px);
+        }
+
+        77% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(18) translate(350px, 250px);
+        }
+
+        100% {
+            opacity: 0;
+        }
     }
-    
-    /* 衝撃波と振動 */
-    70% { transform: scale(1.8) translate(10px, -10px); }
-    72% { transform: scale(1.7) translate(-15px, 15px); }
-    74% { transform: scale(1.8) translate(15px, 5px); }
-    76% { transform: scale(1.75) translate(-10px, -15px); }
-    
-    /* 余韻と戻り */
-    85% { transform: scale(1.05) translateY(0); opacity: 1; filter: brightness(1.2) drop-shadow(0 0 30px #ffd700); }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
-}
 
-/* サム専用FX：黄金の波動 */
-#reveal-fx.sam-fx, #detail-fx.sam-fx {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 101;
-}
+    /* 突撃するエフェクト（赤色の炎オーラ） */
+    .altair-charge-img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100vh;
+        height: 100vh;
+        object-fit: contain;
+        pointer-events: none;
+        z-index: 105;
+        animation: altair-attack 10s ease-in-out infinite;
+    }
 
-#reveal-fx.sam-fx::before, #detail-fx.sam-fx::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
-    opacity: 0;
-    animation: sam-fx-pulse 8s infinite;
-}
+    @keyframes altair-attack {
 
-@keyframes sam-fx-pulse {
-    0%, 65% { opacity: 0; transform: scale(0.5); }
-    68% { opacity: 1; transform: scale(2); }
-    80% { opacity: 0; transform: scale(3); }
-    100% { opacity: 0; }
-}
+        0%,
+        64% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5) translateY(-200px);
+            filter: drop-shadow(0 0 0 transparent);
+        }
 
-/* ホーリードラゴン専用：咆哮と天地鳴動 */
-.char-dragon-breathing {
-    animation: dragon-action 10s ease-in-out infinite;
-}
+        65% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8) translateY(-100px);
+            filter: drop-shadow(0 0 20px #ff0000);
+        }
 
-@keyframes dragon-action {
-    /* 1回目の呼吸 */
-    0%, 30% { transform: scale(1) translate(0); filter: brightness(1) invert(0); }
-    15% { transform: scale(1.04) translateY(-10px); }
-    
-    /* 2回目の呼吸 */
-    45% { transform: scale(1.04) translateY(-10px); }
-    60% { transform: scale(1) translateY(0); }
-    
-    /* 溜め */
-    62% { transform: scale(1.1); filter: brightness(1.5); }
-    
-    /* 咆哮（激しいシェイクと明滅） */
-    65% { transform: scale(1.2) translate(5px, -5px); filter: invert(1) brightness(2); }
-    67% { transform: scale(1.22) translate(-5px, 5px); filter: invert(0) brightness(5); }
-    69% { transform: scale(1.18) translate(8px, 0px); filter: invert(1); }
-    71% { transform: scale(1.24) translate(-8px, -3px); filter: invert(0) brightness(5); }
-    73% { transform: scale(1.2) translate(3px, 6px); filter: invert(1); }
-    75% { transform: scale(1.25) translate(-3px, -6px); filter: invert(0) brightness(8); }
-    77% { transform: scale(1.2) translate(7px, 3px); filter: invert(1); }
-    79% { transform: scale(1.22) translate(-7px, -3px); filter: invert(0) brightness(5); }
-    81% { transform: scale(1.18) translate(0px, 8px); filter: invert(1); }
-    83% { transform: scale(1.25) translate(0px, -8px); filter: invert(0) brightness(8); }
-    
-    /* 余韻と戻り */
-    88% { transform: scale(1.05) translate(0); filter: brightness(1.2) invert(0); }
-    100% { transform: scale(1) translate(0); filter: brightness(1) invert(0); }
-}
+        68% {
+            opacity: 0.9;
+            transform: translate(-50%, -50%) scale(1.6) translateY(50px);
+            filter: drop-shadow(0 0 50px #ff0000) drop-shadow(0 0 100px #ff4400) brightness(1.5);
+        }
 
-/* 情報配置：黒枠白字・視認性特化版 */
-.detail-info, #reveal-info {
-    position: absolute;
-    bottom: 10%;
-    left: 0;
-    right: 0;
-    width: 100%;
-    text-align: center;
-    z-index: 500;
-    pointer-events: none;
-    opacity: 1; /* トリガーに頼らず常に表示 */
-}
+        72% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(2.5) translateY(200px);
+        }
 
-#reveal-name, #detail-name {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 2.2rem;
-    margin: 0;
-    color: #fff;
-    /* 強力な黒い縁取り（黒枠白字） */
-    text-shadow: 
-        2px 2px 0 #000, 
-        -2px 2px 0 #000, 
-        2px -2px 0 #000, 
-        -2px -2px 0 #000,
-        0 0 10px #000;
-}
+        100% {
+            opacity: 0;
+        }
+    }
 
-#reveal-stars, #detail-stars {
-    margin-top: 10px;
-    filter: drop-shadow(0 0 3px black);
-}
-
-.skip-btn {
-    position: absolute;
-    top: 30px;
-    right: 30px;
-    z-index: 150;
-    padding: 8px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.3s;
-}
-
-.skip-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: white;
-}
-
-/* 共通パーツ */
-.whiteout {
-    position: fixed;
-    inset: 0;
-    background: white;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 9999;
-}
-
-.active-whiteout {
-    animation: whiteout-anim 0.8s ease-in forwards;
-}
-
-@keyframes whiteout-anim {
-    0% {
+    /* 残像効果 */
+    .altair-afterimage {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        /* or match original */
+        object-position: center;
+        z-index: 2;
+        /* reveal-imgと同じかその下 */
+        pointer-events: none;
         opacity: 0;
     }
 
-    100% {
-        opacity: 1;
+    .altair-afterimage-1 {
+        animation: altair-afterimage-anim1 10s ease-out infinite;
     }
+
+    .altair-afterimage-2 {
+        animation: altair-afterimage-anim2 10s ease-out infinite;
+    }
+
+    @keyframes altair-afterimage-anim1 {
+
+        0%,
+        64% {
+            opacity: 0;
+            transform: scale(1) translateY(0);
+            filter: brightness(1) sepia(0);
+        }
+
+        65% {
+            opacity: 0.8;
+            transform: scale(1.05) translateY(-10px) translateX(-15px);
+            filter: brightness(1.5) sepia(0.5) hue-rotate(180deg);
+        }
+
+        68% {
+            opacity: 0;
+            transform: scale(1.2) translateY(-30px) translateX(-30px);
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes altair-afterimage-anim2 {
+
+        0%,
+        64% {
+            opacity: 0;
+            transform: scale(1) translateY(0);
+            filter: brightness(1) sepia(0);
+        }
+
+        66% {
+            opacity: 0.6;
+            transform: scale(1.08) translateY(-20px) translateX(20px);
+            filter: brightness(1.5) sepia(0.5) hue-rotate(-90deg);
+        }
+
+        69% {
+            opacity: 0;
+            transform: scale(1.25) translateY(-40px) translateX(40px);
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    /* サム専用：超豪華版テレポートと黄金の激突 */
+    .char-sam-breathing {
+        animation: sam-action 8s ease-in-out infinite;
+        /* 少しテンポアップ */
+    }
+
+    @keyframes sam-action {
+
+        0%,
+        30% {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            filter: brightness(1) drop-shadow(0 0 0 transparent);
+        }
+
+        15% {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        /* 溜め（エネルギー凝縮） */
+        45% {
+            transform: scale(0.95) translateY(5px);
+            filter: brightness(1.3) drop-shadow(0 0 20px #ffcc00);
+        }
+
+        /* 極大消失（テレポート） */
+        50% {
+            transform: scale(5) translateY(-200px);
+            opacity: 0;
+            filter: brightness(5);
+        }
+
+        /* 黄金の再突入（超スピード） */
+        65% {
+            transform: scale(0.1);
+            opacity: 0;
+        }
+
+        68% {
+            transform: scale(1.8) translateY(0);
+            opacity: 1;
+            filter: brightness(2) drop-shadow(0 0 50px #ffd700) drop-shadow(0 0 100px #ffaa00) drop-shadow(0 0 150px #ff4400);
+        }
+
+        /* 衝撃波と振動 */
+        70% {
+            transform: scale(1.8) translate(10px, -10px);
+        }
+
+        72% {
+            transform: scale(1.7) translate(-15px, 15px);
+        }
+
+        74% {
+            transform: scale(1.8) translate(15px, 5px);
+        }
+
+        76% {
+            transform: scale(1.75) translate(-10px, -15px);
+        }
+
+        /* 余韻と戻り */
+        85% {
+            transform: scale(1.05) translateY(0);
+            opacity: 1;
+            filter: brightness(1.2) drop-shadow(0 0 30px #ffd700);
+        }
+
+        100% {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* サム専用FX：黄金の波動 */
+    #reveal-fx.sam-fx,
+    #detail-fx.sam-fx {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 101;
+    }
+
+    #reveal-fx.sam-fx::before,
+    #detail-fx.sam-fx::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+        opacity: 0;
+        animation: sam-fx-pulse 8s infinite;
+    }
+
+    @keyframes sam-fx-pulse {
+
+        0%,
+        65% {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        68% {
+            opacity: 1;
+            transform: scale(2);
+        }
+
+        80% {
+            opacity: 0;
+            transform: scale(3);
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    /* ホーリードラゴン専用：咆哮と天地鳴動 */
+    .char-dragon-breathing {
+        animation: dragon-action 10s ease-in-out infinite;
+    }
+
+    #reveal-fx.dragon-fx, #detail-fx.dragon-fx {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 105;
+        overflow: hidden;
+    }
+
+    /* 衝撃波エフェクト */
+    .dragon-shockwave {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 20px solid rgba(255, 255, 255, 0.9);
+        transform: translate(-50%, -50%) scale(0);
+        box-shadow: 0 0 50px #fff, inset 0 0 50px #fff;
+        animation: dragon-shockwave-anim 10s ease-out infinite;
+        opacity: 0;
+    }
+
+    @keyframes dragon-shockwave-anim {
+        0%, 64% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        65% { transform: translate(-50%, -50%) scale(1); opacity: 1; border-width: 40px; }
+        68% { transform: translate(-50%, -50%) scale(25); opacity: 0; border-width: 1px; }
+        100% { transform: translate(-50%, -50%) scale(25); opacity: 0; }
+    }
+
+    /* 隕石エフェクト（画像版） */
+    .dragon-meteor {
+        position: absolute;
+        width: 15vw; /* 適度な大きさ、縮尺は変数で制御 */
+        max-width: 130px; /* 最大サイズを制限 */
+        object-fit: contain;
+        transform-origin: center;
+        opacity: 0;
+        animation: dragon-meteor-anim 10s linear infinite;
+        z-index: 106;
+    }
+
+    @keyframes dragon-meteor-anim {
+        0%, 64.9% { opacity: 0; transform: translateY(-50vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        65% { opacity: 1; transform: translateY(-50vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        70% { opacity: 1; transform: translateY(150vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        70.1% { opacity: 0; transform: translateY(150vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+
+        72% { opacity: 0; transform: translateY(-80vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        72.1% { opacity: 1; transform: translateY(-80vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        77% { opacity: 1; transform: translateY(150vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        77.1% { opacity: 0; transform: translateY(150vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+
+        79% { opacity: 0; transform: translateY(-20vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        79.1% { opacity: 1; transform: translateY(-20vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        83% { opacity: 1; transform: translateY(150vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+        83.1% { opacity: 0; transform: translateY(150vh) rotate(25deg) scale(var(--meteor-scale, 1)); }
+
+        100% { opacity: 0; }
+    }
+
+    @keyframes dragon-action {
+
+        /* 1回目の呼吸 */
+        0%,
+        30% {
+            transform: scale(1) translate(0);
+            filter: brightness(1) invert(0);
+        }
+
+        15% {
+            transform: scale(1.04) translateY(-10px);
+        }
+
+        /* 2回目の呼吸 */
+        45% {
+            transform: scale(1.04) translateY(-10px);
+        }
+
+        60% {
+            transform: scale(1) translateY(0);
+        }
+
+        /* 溜め */
+        62% {
+            transform: scale(1.1);
+            filter: brightness(1.5);
+        }
+
+        /* 咆哮（激しいシェイクと明滅） */
+        65% {
+            transform: scale(1.2) translate(5px, -5px);
+            filter: invert(1) brightness(2);
+        }
+
+        67% {
+            transform: scale(1.22) translate(-5px, 5px);
+            filter: invert(0) brightness(5);
+        }
+
+        69% {
+            transform: scale(1.18) translate(8px, 0px);
+            filter: invert(1);
+        }
+
+        71% {
+            transform: scale(1.24) translate(-8px, -3px);
+            filter: invert(0) brightness(5);
+        }
+
+        73% {
+            transform: scale(1.2) translate(3px, 6px);
+            filter: invert(1);
+        }
+
+        75% {
+            transform: scale(1.25) translate(-3px, -6px);
+            filter: invert(0) brightness(8);
+        }
+
+        77% {
+            transform: scale(1.2) translate(7px, 3px);
+            filter: invert(1);
+        }
+
+        79% {
+            transform: scale(1.22) translate(-7px, -3px);
+            filter: invert(0) brightness(5);
+        }
+
+        81% {
+            transform: scale(1.18) translate(0px, 8px);
+            filter: invert(1);
+        }
+
+        83% {
+            transform: scale(1.25) translate(0px, -8px);
+            filter: invert(0) brightness(8);
+        }
+
+        /* 余韻と戻り */
+        88% {
+            transform: scale(1.05) translate(0);
+            filter: brightness(1.2) invert(0);
+        }
+
+        100% {
+            transform: scale(1) translate(0);
+            filter: brightness(1) invert(0);
+        }
+    }
+
+    /* 情報配置：黒枠白字・視認性特化版 */
+    .detail-info,
+    #reveal-info {
+        position: absolute;
+        bottom: 10%;
+        left: 0;
+        right: 0;
+        width: 100%;
+        text-align: center;
+        z-index: 500;
+        pointer-events: none;
+        opacity: 1;
+        /* トリガーに頼らず常に表示 */
+    }
+
+    #reveal-name,
+    #detail-name {
+        font-family: 'Shippori Mincho', serif;
+        font-size: 2.2rem;
+        margin: 0;
+        color: #fff;
+        /* 強力な黒い縁取り（黒枠白字） */
+        text-shadow:
+            2px 2px 0 #000,
+            -2px 2px 0 #000,
+            2px -2px 0 #000,
+            -2px -2px 0 #000,
+            0 0 10px #000;
+    }
+
+    #reveal-stars,
+    #detail-stars {
+        margin-top: 10px;
+        filter: drop-shadow(0 0 3px black);
+    }
+
+    .skip-btn {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        z-index: 150;
+        padding: 8px 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    .skip-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: white;
+    }
+
+    /* 共通パーツ */
+    .whiteout {
+        position: fixed;
+        inset: 0;
+        background: white;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .active-whiteout {
+        animation: whiteout-anim 0.8s ease-in forwards;
+    }
+
+    @keyframes whiteout-anim {
+        0% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes rotate-glow {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+/* 炎の柱エフェクト（最後に吹き上がる） */
+.altair-fire-pillar {
+    position: absolute;
+    bottom: -10%;
+    left: 50%;
+    transform: translateX(-50%) scaleY(0);
+    transform-origin: bottom center;
+    width: 250px;
+    height: 120vh;
+    background: linear-gradient(to top, rgba(255, 60, 0, 0.9) 0%, rgba(255, 150, 0, 0.7) 40%, rgba(255, 255, 0, 0.3) 70%, transparent 100%);
+    filter: blur(10px) drop-shadow(0 0 50px #ff2200);
+    z-index: 110;
+    pointer-events: none;
+    animation: altair-pillar 10s ease-in-out infinite;
 }
 
-@keyframes rotate-glow {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+@keyframes altair-pillar {
+    0%, 70% { opacity: 0; transform: translateX(-50%) scaleY(0); }
+    72% { opacity: 1; transform: translateX(-50%) scaleY(1); filter: blur(5px) drop-shadow(0 0 80px #ff2200) brightness(2); }
+    76% { opacity: 0.8; transform: translateX(-50%) scaleY(1.2) scaleX(1.5); filter: blur(15px) drop-shadow(0 0 40px #ff2200) brightness(1.5); }
+    82% { opacity: 0; transform: translateX(-50%) scaleY(2) scaleX(3); }
+    100% { opacity: 0; }
 }
