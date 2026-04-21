@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=1.5">
     <style>
         :root {
             --hsr-gold-bright: #f9e27d;
@@ -24,6 +25,10 @@
             padding: 40px 20px;
             font-family: 'Noto Sans JP', sans-serif;
             min-height: 100vh;
+            /* style.cssの干渉を排除 */
+            display: block !important;
+            height: auto !important;
+            overflow: auto !important;
         }
 
         .archive-header {
@@ -117,25 +122,49 @@
             opacity: 0.5;
         }
 
-        .collection-item-img {
+        .collection-img-wrapper {
+            position: relative;
             width: 100%;
             aspect-ratio: 1/1.4;
-            object-fit: cover;
-            object-position: top;
-            border-radius: 6px;
             margin-bottom: 12px;
+            border-radius: 6px;
+            overflow: hidden;
             background: #000;
         }
 
-        .unobtained .collection-item-img {
+        .collection-item-img, .collection-bg-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top;
+        }
+
+        .collection-bg-img {
+            z-index: 0;
+        }
+
+        .collection-item-img {
+            z-index: 1;
+            background: transparent;
+        }
+
+        .unobtained .collection-item-img, .unobtained .collection-bg-img {
             filter: brightness(0);
         }
 
         .collection-item-name {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-align: center;
             font-weight: bold;
             margin-bottom: 5px;
+            line-height: 1.2;
+            min-height: 2.2rem; /* 2行分確保 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .unobtained .collection-item-name {
@@ -143,8 +172,8 @@
         }
 
         .stars {
-            font-size: 0.8rem;
-            letter-spacing: 2px;
+            font-size: 0.8rem !important;
+            letter-spacing: 2px !important;
         }
 
         .star5 { color: #ffcc00; text-shadow: 0 0 5px #ffcc00; }
@@ -170,14 +199,6 @@
             z-index: 2;
         }
 
-        .detail-info {
-            position: absolute;
-            bottom: 5%;
-            width: 100%;
-            text-align: center;
-            z-index: 3;
-        }
-
         .bg-glow {
             position: absolute;
             width: 200%;
@@ -189,6 +210,17 @@
         @keyframes rotate-glow {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        /* モーダル内の情報配置 */
+        .detail-info {
+            position: absolute;
+            bottom: 10%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -208,11 +240,13 @@
 
     <!-- 詳細表示モーダル -->
     <div id="detail-modal" onclick="closeDetail()">
+        <div id="detail-fx"></div> <!-- 特殊エフェクト用 -->
         <div class="bg-glow"></div>
+        <img id="detail-bg-img" src="" alt="Background" style="display:none;">
         <img id="detail-img" src="" alt="Detail">
         <div class="detail-info">
+            <h2 id="detail-name"></h2>
             <div id="detail-stars" class="stars"></div>
-            <h2 id="detail-name" style="font-family: 'Shippori Mincho', serif; font-size: 2.5rem; margin: 0; text-shadow: 0 0 10px white;"></h2>
         </div>
     </div>
 
@@ -243,6 +277,14 @@
 
         const OBTAINED_KEY = 'gacha_app_obtained_chars';
         const obtainedChars = new Set(JSON.parse(localStorage.getItem(OBTAINED_KEY) || '[]'));
+        let samImageTimer = null;
+
+        function clearSamTimer() {
+            if (samImageTimer) {
+                clearInterval(samImageTimer);
+                samImageTimer = null;
+            }
+        }
 
         function initArchive() {
             const grid = document.getElementById('collection-grid');
@@ -263,9 +305,36 @@
                 let starStr = "";
                 for (let i = 0; i < item.rarity; i++) starStr += "✦";
 
+                // 名前のパース（【二つ名】名前 の形式なら分ける）
+                let displayName = '？？？？';
+                if (isObtained) {
+                    const fullName = item.data.name;
+                    const match = fullName.match(/^(【.+?】)(.+)$/);
+                    if (match) {
+                        displayName = `<span style="font-size: 0.65rem; opacity: 0.7; display: block;">${match[1]}</span><span>${match[2]}</span>`;
+                    } else {
+                        displayName = `<span>${fullName}</span>`;
+                    }
+                }
+
+                // サムの場合、図鑑一覧では2枚目の画像を表示
+                let gridImg = item.data.img;
+                if (item.data.name.includes('サム')) {
+                    gridImg = gridImg.replace('」', '2」');
+                }
+
+                // アルタイルの場合、カード背景も表示する
+                let bgHtml = '';
+                if (item.data.name.includes('アルタイル')) {
+                    bgHtml = `<img src="image/アルタイル背景.png" class="collection-bg-img" alt="bg">`;
+                }
+
                 el.innerHTML = `
-                    <img src="${item.data.img}" class="collection-item-img">
-                    <div class="collection-item-name">${isObtained ? item.data.name : '？？？？'}</div>
+                    <div class="collection-img-wrapper">
+                        ${bgHtml}
+                        <img src="${gridImg}" class="collection-item-img">
+                    </div>
+                    <div class="collection-item-name">${displayName}</div>
                     <div class="stars star${item.rarity}">${starStr}</div>
                 `;
 
@@ -282,18 +351,80 @@
             const img = document.getElementById('detail-img');
             const nameEl = document.getElementById('detail-name');
             const starsEl = document.getElementById('detail-stars');
+            const bgImg = document.getElementById('detail-bg-img');
 
+            img.style.opacity = '0'; // 残像防止
             img.src = item.data.img;
-            nameEl.innerText = item.data.name;
+            
+            // 背景画像のリセット
+            bgImg.src = '';
+            bgImg.style.display = 'none';
+
+            // 名前のパース
+            const fullName = item.data.name;
+            const match = fullName.match(/^(【.+?】)(.+)$/);
+            if (match) {
+                nameEl.innerHTML = `<div style="font-size: 1.4rem; opacity: 0.9; margin-bottom: 5px;">${match[1]}</div><div>${match[2]}</div>`;
+            } else {
+                nameEl.innerHTML = `<div>${fullName}</div>`;
+            }
+
             let starStr = "";
             for (let i = 0; i < item.rarity; i++) starStr += "✦";
             starsEl.innerText = starStr;
             starsEl.className = `stars star${item.rarity}`;
 
+            // 即座に透明度を戻す（図鑑はシルエット演出がないため）
+            img.style.opacity = '1';
+
+            // 演出の切り替え（特定キャラは特殊演出）
+            img.classList.remove('char-breathing', 'char-altair-breathing', 'char-sam-breathing', 'char-dragon-breathing');
+            const fxLayer = document.getElementById('detail-fx');
+            fxLayer.className = '';
+
+            clearSamTimer();
+            if (item.data.name.includes('サム')) {
+                img.classList.add('char-sam-breathing');
+                fxLayer.classList.add('sam-fx');
+
+                const firstImgSrc = item.data.img;
+                const secondImgSrc = firstImgSrc.replace('」', '2」');
+                const preload = new Image();
+                preload.src = secondImgSrc;
+
+                const startTime = Date.now();
+                samImageTimer = setInterval(() => {
+                    const elapsed = (Date.now() - startTime) % 8000;
+                    if (elapsed > 5200 && elapsed < 7800) {
+                        if (!img.src.includes('2.png')) {
+                            img.style.opacity = '0';
+                            img.src = secondImgSrc;
+                            setTimeout(() => img.style.opacity = '1', 50);
+                        }
+                    } else {
+                        if (img.src.includes('2.png')) {
+                            img.style.opacity = '0';
+                            img.src = firstImgSrc;
+                            setTimeout(() => img.style.opacity = '1', 50);
+                        }
+                    }
+                }, 100);
+            } else if (item.data.name.includes('ホーリードラゴン')) {
+                img.classList.add('char-dragon-breathing');
+            } else if (item.data.name.includes('アルタイル')) {
+                img.classList.add('char-altair-breathing');
+                fxLayer.classList.add('altair-fx');
+                bgImg.src = 'image/アルタイル背景.png';
+                bgImg.style.display = 'block';
+            } else if (item.rarity === 5) {
+                img.classList.add('char-breathing');
+            }
+
             modal.style.display = 'flex';
         }
 
         function closeDetail() {
+            clearSamTimer();
             document.getElementById('detail-modal').style.display = 'none';
         }
 
