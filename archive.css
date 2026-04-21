@@ -1,0 +1,218 @@
+/* =========================================================
+   Archive Page Specific Styles
+   ========================================================= */
+
+body {
+    background-color: #050608;
+    background-image: radial-gradient(circle at center, #1b202e 0%, #050608 100%);
+    background-attachment: fixed;
+    color: white;
+    margin: 0;
+    padding: 40px 20px;
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    display: block !important;
+    height: auto !important;
+    overflow: auto !important;
+}
+
+.archive-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto 30px auto;
+    border-bottom: 2px solid rgba(206, 174, 123, 0.3);
+    padding-bottom: 15px;
+}
+
+.archive-title {
+    font-family: 'Shippori Mincho', serif;
+    color: var(--hsr-gold-bright);
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 30px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-family: 'Shippori Mincho', serif;
+    font-weight: bold;
+    transition: 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.btn-reset {
+    background: rgba(255, 50, 50, 0.1);
+    border: 1px solid rgba(255, 50, 50, 0.5);
+    color: #ff8888;
+    padding: 8px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-family: 'Shippori Mincho', serif;
+    font-weight: bold;
+    transition: 0.3s;
+    margin-right: 15px;
+}
+
+.btn-reset:hover {
+    background: rgba(255, 50, 50, 0.3);
+    color: #ffaaaa;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 25px;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.collection-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.collection-item:not(.unobtained):hover {
+    transform: translateY(-5px);
+    border-color: var(--hsr-gold-mid);
+    background: rgba(206, 174, 123, 0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.collection-item.unobtained {
+    opacity: 0.5;
+}
+
+.collection-img-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1.4;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #000;
+}
+
+.collection-item-img, .collection-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.collection-bg-img {
+    z-index: 0;
+}
+
+.collection-item-img {
+    z-index: 1;
+    background: transparent;
+}
+
+.unobtained .collection-item-img, .unobtained .collection-bg-img {
+    filter: brightness(0);
+}
+
+.collection-item-name {
+    font-size: 0.85rem;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+    line-height: 1.2;
+    min-height: 2.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.unobtained .collection-item-name {
+    color: #555;
+}
+
+/* 詳細モーダル（全身表示用） */
+#detail-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#detail-img {
+    max-height: 90vh;
+    position: relative;
+    z-index: 2;
+}
+
+#detail-bg-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 95vh;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.bg-glow {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    animation: rotate-glow 30s linear infinite;
+}
+
+/* モーダル内の情報配置 */
+.detail-info {
+    position: absolute;
+    bottom: 10%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 500;
+    pointer-events: none;
+}
+
+#detail-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 2.2rem;
+    margin: 0;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000, 0 0 10px #000;
+}
+
+#detail-stars {
+    margin-top: 10px;
+    filter: drop-shadow(0 0 3px black);
+}
