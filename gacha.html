@@ -57,7 +57,7 @@
             <!-- JSでここにカードが生成されます -->
         </div>
         <div class="result-actions">
-            <button class="btn-simple" onclick="returnToTitle()">タイトルへ戻る</button>
+            <button class="btn-simple" onclick="backToGacha()">ガチャに戻る</button>
         </div>
     </div>
 
@@ -787,14 +787,10 @@
         }
 
         // タイトルへ戻る処理
-        function returnToTitle() {
-            clearRevealEffects();
-            const flash = document.getElementById('flash');
-            flash.classList.add('active-whiteout');
-
-            setTimeout(() => {
-                location.href = 'index.html';
-            }, 600);
+        function backToGacha() {
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('title-screen').style.display = 'flex';
+            window.scrollTo(0, 0);
         }
 
         function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }

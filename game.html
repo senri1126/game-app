@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPGバトル - ガチャシミュレーター</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Shippori+Mincho:wght@700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="game.css?v=2.0">
 </head>
+
 <body>
     <div class="bg-layer"></div>
     <div class="particles" id="particles"></div>
     <div class="damage-flash" id="damage-flash"></div>
 
-    <a href="index.html" class="nav-back">← 戻る</a>
+    <!-- 行動順表示 -->
+    <div class="turn-order-container" id="turn-order"></div>
+
+    <a href="index.html" class="nav-back">← タイトルに戻る</a>
 
     <div class="game-header">
         <div class="game-title">⚔ CHARACTER BATTLE ⚔</div>
@@ -20,55 +27,46 @@
     </div>
 
     <div class="battle-area">
-        <!-- 敵 -->
-        <div class="char-card enemy-side">
-            <div class="char-avatar enemy-avatar" id="enemy-avatar">👹</div>
-            <div class="char-name" id="enemy-name">スライム</div>
-            <div class="hp-bar-container">
-                <div class="hp-label"><span>HP</span><span id="enemy-hp-text">50 / 50</span></div>
-                <div class="hp-bar-bg"><div class="hp-bar-fill enemy-hp" id="enemy-hp-bar" style="width:100%"></div></div>
-            </div>
+        <!-- プレイヤー陣営 (左側) -->
+        <div class="side-container player-side-container" id="player-party-container">
+            <!-- JSでカードが生成されます -->
         </div>
 
         <div class="vs-badge">VS</div>
 
-        <!-- プレイヤー -->
-        <div class="char-card player-side">
-            <div class="hp-bar-container">
-                <div class="hp-label"><span>HP</span><span id="player-hp-text">100 / 100</span></div>
-                <div class="hp-bar-bg"><div class="hp-bar-fill player-hp" id="player-hp-bar" style="width:100%"></div></div>
-            </div>
-            <div class="char-name" id="player-name">勇者</div>
-            <div class="char-avatar player-avatar" id="player-avatar">🛡️</div>
-            <div class="player-stats">
-                <span id="player-rarity">★★★</span> | ATK: <span id="player-atk-val">10</span>
-            </div>
+        <!-- 敵陣営 (右側) -->
+        <div class="side-container enemy-side-container" id="enemy-party-container">
+            <!-- JSでカードが生成されます -->
         </div>
+    </div>
 
-        <!-- コマンドエリア -->
-        <div class="action-area">
-            <div class="command-grid" id="command-buttons">
-                <button class="command-btn" onclick="executeCommand('attack')">
-                    <span class="cmd-icon">⚔️</span>
-                    <span class="cmd-label">たたかう</span>
-                </button>
-                <button class="command-btn" onclick="executeCommand('evade')">
-                    <span class="cmd-icon">💨</span>
-                    <span class="cmd-label">よける</span>
-                </button>
-                <button class="command-btn special" id="btn-special" onclick="executeCommand('special')">
-                    <span class="cmd-icon">🔥</span>
-                    <span class="cmd-label">ひっさつ</span>
-                    <span class="cooldown-overlay" id="special-cooldown"></span>
-                </button>
-                <button class="command-btn item" id="btn-item" onclick="executeCommand('item')">
-                    <span class="cmd-icon">🧪</span>
-                    <span class="cmd-label">どうぐ</span>
-                    <span class="item-count" id="item-count">3</span>
-                </button>
-            </div>
+    <!-- コマンドエリア -->
+    <div class="action-area-fixed">
+        <div class="command-grid" id="command-buttons">
+            <button class="command-btn" onclick="executeCommand('attack')">
+                <span class="cmd-icon">⚔️</span>
+                <span class="cmd-label">たたかう</span>
+            </button>
+            <button class="command-btn" onclick="executeCommand('evade')">
+                <span class="cmd-icon">💨</span>
+                <span class="cmd-label">よける</span>
+            </button>
+            <button class="command-btn special" id="btn-special" onclick="executeCommand('special')">
+                <span class="cmd-icon">🔥</span>
+                <span class="cmd-label">ひっさつ</span>
+                <span class="sp-ready-glow"></span>
+            </button>
+            <button class="command-btn item" id="btn-item-hp" onclick="executeCommand('item-hp')">
+                <span class="cmd-icon">🧪</span>
+                <span class="cmd-label">HP回復</span>
+                <span class="item-count" id="item-hp-count">3</span>
+            </button>
+            <button class="command-btn item-sp" id="btn-item-sp" onclick="executeCommand('item-sp')">
+                <span class="cmd-icon">⚡</span>
+                <span class="cmd-label">SPチャージ</span>
+                <span class="item-count" id="item-sp-count">3</span>
+            </button>
         </div>
-
         <div class="battle-log" id="battle-log"></div>
     </div>
 
@@ -80,288 +78,480 @@
     </div>
 
     <script>
-        // === キャラクターDB (index.htmlと同期させるのが理想だが、ここでは簡易的に保持) ===
+        // === 設定・DB ===
         const CHAR_STATS = {
-            5: { hp: 500, atk: 80, speed: 40, color: '#ffcc00' },
-            4: { hp: 250, atk: 35, speed: 15, color: '#c724b1' },
-            3: { hp: 120, atk: 12, speed: 5,  color: '#00a8ff' }
+            5: { hp: 600,  atk: 120, speed: 45, def: 40, crit: 0.20, color: '#ffcc00' }, 
+            4: { hp: 100,  atk: 15,  speed: 15, def: 15, crit: 0.05, color: '#c724b1' }, 
+            3: { hp: 50,   atk: 5,   speed: 5,  def: 5,  crit: 0.02, color: '#00a8ff' }  
         };
 
-        const ENEMIES = [
-            { name: '迷いスライム',   emoji: '💧', hp: 60,   atk: 8,   speed: 2,  desc: '森に迷い込んだ弱いスライム。' },
-            { name: '帝国の重装歩兵', emoji: '💂', hp: 400,  atk: 45,  speed: 10, desc: '訓練された兵士。防御力が高い。' },
-            { name: '魔王の化身',     emoji: '👿', hp: 1500, atk: 120, speed: 30, desc: '全てを破壊する恐怖の化身。' }
+        const ENEMY_TYPES = {
+            weak:   { name: '迷いスライム',   emoji: '💧', hp: 60,   atk: 8,   def: 2,  speed: 2,  desc: '弱いスライム。' },
+            mid:    { name: '帝国の重装歩兵', emoji: '💂', hp: 500,  atk: 60,  def: 45, speed: 10, desc: '防御力が高い兵士。' },
+            boss:   { name: '魔王の化身',     emoji: '👿', hp: 1800, atk: 150, def: 60, speed: 30, desc: '破壊の化身。' }
+        };
+
+        const STAGES = [
+            { enemies: ['weak'] },
+            { enemies: ['mid', 'mid'] },
+            { enemies: ['boss', 'mid', 'mid'] }
         ];
 
         // === ゲーム状態 ===
-        let stage = 0;
-        let player = {
-            name: '勇者',
-            rarity: 3,
-            hp: 100,
-            maxHp: 100,
-            atk: 10,
-            speed: 5,
-            itemCount: 3,
-            specialCooldown: 0,
-            isEvading: false
-        };
-        let enemyHp = 0;
-        let enemyMaxHp = 0;
-        let isTurnTransition = false;
+        let currentStage = 0;
+        let playerParty = [];
+        let enemyParty = [];
+        let turnQueue = [];
+        let activeChar = null;
+        let currentTarget = null;
+        let isProcessing = false;
+        let globalItems = { hp: 3, sp: 3 };
 
         // === 初期化 ===
         function init() {
             createParticles();
-            setupPlayer();
-            loadEnemy();
+            setupPlayerParty();
+            loadStage();
+            updateItemDisplay();
         }
 
-        function setupPlayer() {
-            const OBTAINED_KEY = 'game_app_obtained_chars';
-            const obtained = JSON.parse(localStorage.getItem(OBTAINED_KEY) || '[]');
+        function updateItemDisplay() {
+            document.getElementById('item-hp-count').textContent = globalItems.hp;
+            document.getElementById('item-sp-count').textContent = globalItems.sp;
             
-            // 獲得済みキャラから最強のものを選択（簡易ロジック）
-            let bestRarity = 3;
-            let bestName = '見習い冒険者';
+            const btnHp = document.getElementById('btn-item-hp');
+            const btnSp = document.getElementById('btn-item-sp');
+            if (globalItems.hp <= 0) btnHp.classList.add('disabled');
+            if (globalItems.sp <= 0) btnSp.classList.add('disabled');
+        }
+
+        function setupPlayerParty() {
+            const PARTY_KEY = 'game_app_party';
+            let savedParty = [];
+            try {
+                const raw = localStorage.getItem(PARTY_KEY);
+                savedParty = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(savedParty)) savedParty = [savedParty];
+            } catch(e) { savedParty = []; }
             
-            // 本当はCHAR_DBを参照したいが、ここでは簡易的に判定
-            obtained.forEach(name => {
-                if (name.includes('サム') || name.includes('ドラゴン') || name.includes('アルタイル')) {
-                    bestRarity = 5;
-                    bestName = name;
-                } else if (bestRarity < 4 && (name.includes('ゴーレム') || name.includes('将軍'))) {
-                    bestRarity = 4;
-                    bestName = name;
-                }
+            playerParty = savedParty.filter(d => d && typeof d === 'object').map((data, index) => {
+                const stats = getCharStats(data);
+                return {
+                    id: `p${index}`,
+                    side: 'player',
+                    name: data.displayName || data.name || '冒険者',
+                    icon: data.icon || '⚔️',
+                    rarity: data.rarity || 3,
+                    hp: stats.hp,
+                    maxHp: stats.hp,
+                    atk: stats.atk,
+                    def: stats.def,
+                    speed: stats.speed,
+                    crit: stats.crit,
+                    sp: 0,
+                    img: data.img || "",
+                    isEvading: false,
+                    isExtraTurn: false
+                };
             });
 
-            const stats = CHAR_STATS[bestRarity];
-            player.name = bestName;
-            player.rarity = bestRarity;
-            player.maxHp = stats.hp;
-            player.hp = stats.hp;
-            player.atk = stats.atk;
-            player.speed = stats.speed;
+            if (playerParty.length === 0) {
+                playerParty = [{
+                    id: 'p0', side: 'player', name: '勇者', icon: '🛡️', rarity: 3,
+                    hp: 120, maxHp: 120, atk: 12, def: 5, speed: 5, crit: 0.02, sp: 0, isEvading: false
+                }];
+            }
+            renderParty('player');
+        }
 
-            document.getElementById('player-name').textContent = player.name;
-            document.getElementById('player-atk-val').textContent = player.atk;
-            document.getElementById('player-rarity').textContent = '★'.repeat(player.rarity);
-            document.getElementById('player-rarity').style.color = stats.color;
+        function getCharStats(data) {
+            const rarity = (data && data.rarity) ? data.rarity : 3;
+            const stats = JSON.parse(JSON.stringify(CHAR_STATS[rarity] || CHAR_STATS[3]));
+            const cname = (data && (data.displayName || data.name)) ? (data.displayName || data.name) : "";
             
-            // アイコンの設定（簡易）
-            const avatar = document.getElementById('player-avatar');
-            if (bestName.includes('サム')) avatar.textContent = '🏹';
-            else if (bestName.includes('ドラゴン')) avatar.textContent = '🐉';
-            else if (bestName.includes('アルタイル')) avatar.textContent = '🦊';
-            else if (bestRarity === 4) avatar.textContent = '⚔️';
-            else avatar.textContent = '🛡️';
+            if (cname.includes('ドラゴン')) { stats.hp = 1000; stats.atk = 100; stats.def = 100; stats.speed = 15; stats.crit = 0.10; }
+            else if (cname.includes('アルタイル')) { stats.hp = 300; stats.atk = 150; stats.def = 20; stats.speed = 75; stats.crit = 0.30; }
+            else if (cname.includes('サム')) { stats.hp = 800; stats.atk = 180; stats.def = 50; stats.speed = 45; stats.crit = 0.20; }
+            return stats;
+        }
+
+        function loadStage() {
+            isProcessing = false; // フラグをリセットして確実にターンを回す
+            const stageData = STAGES[currentStage];
+            if (!stageData) return;
+            enemyParty = stageData.enemies.map((type, index) => {
+                const base = ENEMY_TYPES[type];
+                return {
+                    ...base,
+                    id: `e${index}`,
+                    side: 'enemy',
+                    maxHp: base.hp,
+                    sp: 0,
+                    isEvading: false
+                };
+            });
+            
+            document.getElementById('stage-info').textContent = `STAGE ${currentStage + 1} / ${STAGES.length}`;
+            renderParty('enemy');
+            currentTarget = enemyParty[0]; // 初期ターゲット
+            updateTargetUI();
+            addLog(`STAGE ${currentStage + 1}: 敵が現れた！`);
+            
+            startTurnCycle();
         }
 
         function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 30; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.left = `${Math.random() * 100}%`;
-                p.style.animationDuration = `${5 + Math.random() * 10}s`;
-                p.style.animationDelay = `${Math.random() * 10}s`;
-                p.style.width = p.style.height = `${2 + Math.random() * 3}px`;
-                container.appendChild(p);
+            try {
+                const container = document.getElementById('particles');
+                if (!container) return;
+                for (let i = 0; i < 30; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'particle';
+                    p.style.left = `${Math.random() * 100}%`;
+                    p.style.animationDuration = `${5 + Math.random() * 10}s`;
+                    p.style.width = p.style.height = `${2 + Math.random() * 2}px`;
+                    container.appendChild(p);
+                }
+            } catch(e) { console.error("Particles failed", e); }
+        }
+
+        function renderParty(side) {
+            const container = document.getElementById(side === 'player' ? 'player-party-container' : 'enemy-party-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const party = side === 'player' ? playerParty : enemyParty;
+
+            party.forEach(char => {
+                const card = document.createElement('div');
+                card.id = `card-${char.id}`;
+                card.className = `char-card ${side}-side`;
+                if (char.hp <= 0) card.classList.add('defeated');
+
+                let avatarContent = char.icon || '❓';
+                if (char.img) {
+                    avatarContent = `<img src="${char.img}" style="width:100%; height:100%; object-fit:contain;">`;
+                }
+
+                card.innerHTML = `
+                    <div class="char-avatar ${side}-avatar" id="avatar-${char.id}">${avatarContent}</div>
+                    <div class="char-name-label">${char.name}</div>
+                    <div class="status-container">
+                        <div class="hp-bar-container">
+                            <div class="hp-label"><span>HP</span><span id="hp-text-${char.id}">${char.hp} / ${char.maxHp}</span></div>
+                            <div class="hp-bar-bg"><div class="hp-bar-fill ${side}-hp" id="hp-bar-${char.id}" style="width:${(char.hp/char.maxHp)*100}%"></div></div>
+                        </div>
+                        <div class="sp-bar-container">
+                            <div class="sp-label"><span>${side === 'player' ? 'SP' : 'ULT'}</span><span id="sp-text-${char.id}">${char.sp}%</span></div>
+                            <div class="sp-bar-bg"><div class="sp-bar-fill ${side}-sp" id="sp-bar-${char.id}" style="width:${char.sp}%"></div></div>
+                        </div>
+                    </div>
+                `;
+
+                if (side === 'enemy' && char.hp > 0) {
+                    card.onclick = () => {
+                        currentTarget = char;
+                        updateTargetUI();
+                    };
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        function updateTargetUI() {
+            document.querySelectorAll('.enemy-side').forEach(c => c.classList.remove('targeted'));
+            if (currentTarget && currentTarget.hp > 0) {
+                document.getElementById(`card-${currentTarget.id}`)?.classList.add('targeted');
+            } else {
+                currentTarget = enemyParty.find(e => e.hp > 0) || null;
+                if (currentTarget) document.getElementById(`card-${currentTarget.id}`)?.classList.add('targeted');
             }
         }
 
-        function loadEnemy() {
-            const enemy = ENEMIES[stage];
-            enemyHp = enemy.hp;
-            enemyMaxHp = enemy.hp;
+        // --- ターン制御 ---
+        async function startTurnCycle() {
+            if (isProcessing) return;
+            activeChar = null; // 新しいサイクルのために現在行動者をリセット
+            
+            // 速度順に全キャラを並べる
+            const allChars = [...playerParty, ...enemyParty].filter(c => c.hp > 0);
+            allChars.sort((a, b) => b.speed - a.speed);
+            turnQueue = allChars;
+            updateTurnOrderUI();
 
-            document.getElementById('stage-info').textContent = `STAGE ${stage + 1} / ${ENEMIES.length}`;
-            document.getElementById('enemy-name').textContent = enemy.name;
-            document.getElementById('enemy-avatar').textContent = enemy.emoji;
-            updateHpBars();
-            addLog(`${enemy.name}が現れた！`);
-            if (enemy.desc) addLog(`<span style="color:#aaa; font-size:0.9em;">${enemy.desc}</span>`);
+            nextTurn();
         }
 
-        // === バトルコマンド実行 ===
+        async function nextTurn() {
+            if (turnQueue.length === 0) {
+                isProcessing = false;
+                startTurnCycle();
+                return;
+            }
+
+            activeChar = turnQueue.shift();
+            if (activeChar.hp <= 0) { nextTurn(); return; }
+
+            // --- 状態異常ダメージ処理 (やけどなど) ---
+            if (activeChar.statusEffects && activeChar.statusEffects.includes('burn')) {
+                const dot = Math.floor(activeChar.maxHp * 0.1);
+                activeChar.hp = Math.max(0, activeChar.hp - dot);
+                addLog(`<span style="color:#ff6600;">BURN! ${activeChar.name}は「やけど」で ${dot} のダメージ！</span>`);
+                showDamageEffect(activeChar.id, dot);
+                updateStatusAll();
+                await wait(600);
+                if (checkWinLoss()) return;
+            }
+
+            updateTurnOrderUI();
+            
+            // アクティブキャラを強調
+            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('active-turn'));
+            document.getElementById(`card-${activeChar.id}`)?.classList.add('active-turn');
+
+            if (activeChar.side === 'player') {
+                isProcessing = false;
+                disableCommands(false);
+                updateCommandUI();
+                addLog(`<b>${activeChar.name}</b>の番です。`);
+            } else {
+                disableCommands(true);
+                await wait(800);
+                enemyAction(activeChar);
+            }
+        }
+
+        function updateTurnOrderUI() {
+            const container = document.getElementById('turn-order');
+            container.innerHTML = '';
+            
+            // 現在の行動者と、次に控えているキャラを結合して表示
+            const displayQueue = activeChar ? [activeChar, ...turnQueue] : turnQueue;
+            
+            displayQueue.slice(0, 5).forEach((char, i) => {
+                const item = document.createElement('div');
+                item.className = 'turn-order-item' + (i === 0 ? ' active' : '');
+                item.innerHTML = `<span class="turn-icon">${char.icon || '👹'}</span><span class="turn-name">${char.name}</span>`;
+                container.appendChild(item);
+            });
+        }
+
+        // --- アクション ---
         async function executeCommand(type) {
-            if (isTurnTransition || player.hp <= 0) return;
-            isTurnTransition = true;
+            if (isProcessing || !activeChar || activeChar.side !== 'player') return;
+            isProcessing = true;
             disableCommands(true);
 
             let logMsg = "";
             let damage = 0;
 
-            // 1. プレイヤーの行動
             if (type === 'attack') {
-                damage = calculateDamage(player.atk);
-                logMsg = `${player.name}の攻撃！ ${damage}のダメージ！`;
-                enemyHp = Math.max(0, enemyHp - damage);
-                showDamageEffect('enemy', damage);
+                damage = calculateDamage(activeChar.atk, activeChar.crit, currentTarget.def);
+                logMsg = `${activeChar.name}の攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
+                applyDamage(currentTarget, damage);
+                activeChar.sp = Math.min(100, activeChar.sp + 20);
+                showDamageEffect(currentTarget.id, damage);
             } 
             else if (type === 'evade') {
-                player.isEvading = true;
-                logMsg = `${player.name}は身構えた！ 回避率が大幅にアップ！`;
+                activeChar.isEvading = true;
+                logMsg = `${activeChar.name}は身構えた！`;
+                activeChar.sp = Math.min(100, activeChar.sp + 10);
             }
             else if (type === 'special') {
-                if (player.specialCooldown > 0) return;
-                damage = calculateDamage(player.atk * 2.5);
-                logMsg = `必殺技発動！ ${player.name}の猛攻！ ${damage}のダメージ！`;
-                enemyHp = Math.max(0, enemyHp - damage);
-                player.specialCooldown = 4; // 次のターンからカウントダウン
-                showDamageEffect('enemy', damage, true);
+                const name = activeChar.name;
+                if (name.includes('サム')) {
+                    logMsg = `究極奥義！【神域の矢】！ ${activeChar.name}が敵を殲滅する！`;
+                    addLog(logMsg);
+                    enemyParty.filter(e => e.hp > 0).forEach(e => {
+                        const dmg = e.maxHp; 
+                        applyDamage(e, dmg);
+                        showDamageEffect(e.id, dmg, true);
+                    });
+                } else if (name.includes('ドラゴン')) {
+                    logMsg = `究極奥義！【聖竜の息吹】！ 敵全体を光が包む！`;
+                    addLog(logMsg);
+                    enemyParty.filter(e => e.hp > 0).forEach(e => {
+                        const dmg = Math.floor(e.maxHp * 0.5);
+                        applyDamage(e, dmg);
+                        showDamageEffect(e.id, dmg, true);
+                    });
+                } else if (name.includes('アルタイル')) {
+                    logMsg = `究極奥義！【恒星の獄炎】！ 敵全体を永劫の炎が焼き尽くす！`;
+                    addLog(logMsg);
+                    enemyParty.filter(e => e.hp > 0).forEach(e => {
+                        if (!e.statusEffects) e.statusEffects = [];
+                        if (!e.statusEffects.includes('burn')) e.statusEffects.push('burn');
+                        addLog(`${e.name}は「やけど」状態になった！`);
+                        const dmg = Math.floor(activeChar.atk * 0.5); // 発動時にも少しダメージ
+                        applyDamage(e, dmg);
+                        showDamageEffect(e.id, dmg, true);
+                    });
+                } else {
+                    damage = calculateDamage(activeChar.atk * 3.0, 1.0, currentTarget.def);
+                    logMsg = `必殺技！ ${activeChar.name}の極大攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
+                    applyDamage(currentTarget, damage);
+                    showDamageEffect(currentTarget.id, damage, true);
+                }
+                activeChar.sp = 0;
             }
-            else if (type === 'item') {
-                if (player.itemCount <= 0) return;
-                const heal = Math.floor(player.maxHp * 0.5);
-                player.hp = Math.min(player.maxHp, player.hp + heal);
-                player.itemCount--;
-                logMsg = `回復薬を使った！ HPが${heal}回復した！`;
-                updateHpBars();
-                document.getElementById('item-count').textContent = player.itemCount;
+            else if (type.startsWith('item')) {
+                const itemType = type === 'item-hp' ? 'hp' : 'sp';
+                if (globalItems[itemType] <= 0) {
+                    addLog("<span style='color:#ff8888;'>アイテムが足りません！</span>");
+                    isProcessing = false;
+                    disableCommands(false);
+                    return;
+                }
+                
+                if (type === 'item-hp') {
+                    const heal = Math.floor(activeChar.maxHp * 0.5);
+                    activeChar.hp = Math.min(activeChar.maxHp, activeChar.hp + heal);
+                    logMsg = `回復薬を使用！ ${activeChar.name}のHPが回復！`;
+                    globalItems.hp--;
+                } else {
+                    activeChar.sp = Math.min(100, activeChar.sp + 40);
+                    logMsg = `SPチャージを使用！ ${activeChar.name}のSPが増加！`;
+                    globalItems.sp--;
+                }
+                updateItemDisplay();
             }
 
             addLog(logMsg);
-            updateHpBars();
+            updateStatusAll();
             await wait(1000);
 
-            // 敵の撃破チェック
-            if (enemyHp <= 0) {
-                enemyDefeated();
+            if (checkWinLoss()) return;
+
+            // 追加行動判定
+            if (activeChar.speed >= 30 && Math.random() < 0.20 && !activeChar.isExtraTurn) {
+                addLog(`<span style="color:#00ffff; font-weight:900;">SPEED BOOSTER! ${activeChar.name}の連続行動！</span>`);
+                activeChar.isExtraTurn = true;
+                isProcessing = false;
+                disableCommands(false);
                 return;
             }
+            activeChar.isExtraTurn = false;
 
-            // 2. 敵の行動
-            await enemyTurn();
-
-            // ターン終了処理
-            if (player.specialCooldown > 0) player.specialCooldown--;
-            updateCommandUI();
-            
-            if (player.hp > 0) {
-                isTurnTransition = false;
-                disableCommands(false);
-            }
+            nextTurn();
         }
 
-        async function enemyTurn() {
-            const enemy = ENEMIES[stage];
-            let logMsg = "";
-            
-            addLog(`${enemy.name}のターン！`);
-            await wait(600);
+        async function enemyAction(enemy) {
+            // ランダムな味方を狙う
+            const alivePlayers = playerParty.filter(p => p.hp > 0);
+            if (alivePlayers.length === 0) return;
+            const target = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
 
-            // 回避判定
-            if (player.isEvading && Math.random() < 0.7) {
-                logMsg = `${player.name}は攻撃をひらりと身をかわした！`;
-                player.isEvading = false; // 回避成功で解除
+            addLog(`${enemy.name}の攻撃！`);
+            await wait(500);
+
+            const evadeRate = target.speed >= 30 ? 0.70 : 0.50;
+            if (target.isEvading && Math.random() < evadeRate) {
+                addLog(`<span style="color:#00ffcc;">MISS! ${target.name}は回避した！</span>`);
+                target.isEvading = false;
+                if (target.speed >= 30 && Math.random() < 0.30) {
+                    addLog(`<span style="color:#00ffff;">COUNTER! 追加行動！</span>`);
+                    turnQueue.unshift(target); // 次の番へ
+                }
             } else {
-                const damage = calculateDamage(enemy.atk);
-                player.hp = Math.max(0, player.hp - damage);
-                logMsg = `${player.name}は${damage}のダメージを受けた！`;
-                showDamageEffect('player', damage);
-                player.isEvading = false; // 攻撃を受けたら解除
+                const damage = calculateDamage(enemy.atk, 0.05, target.def);
+                target.hp = Math.max(0, target.hp - damage);
+                target.sp = Math.min(100, target.sp + 15);
+                addLog(`${target.name}は ${damage}のダメージを受けた！`);
+                showDamageEffect(target.id, damage, damage > (enemy.atk - target.def) * 1.4);
+                target.isEvading = false;
             }
 
-            addLog(logMsg);
-            updateHpBars();
-            await wait(800);
+            updateStatusAll();
+            await wait(1000);
+            if (checkWinLoss()) return;
+            nextTurn();
+        }
 
-            if (player.hp <= 0) {
-                gameOver();
+        // --- ユーティリティ ---
+        function calculateDamage(atk, crit, def) {
+            const v = 0.9 + Math.random() * 0.2;
+            let d = (atk * v) - def;
+            if (Math.random() < crit) {
+                d = (atk * 1.5 * v) - def;
+                addLog(`<span style="color:#ffcc00; font-style:italic;">CRITICAL!!</span>`);
+            }
+            return Math.max(1, Math.floor(d));
+        }
+
+        function applyDamage(target, dmg) {
+            target.hp = Math.max(0, target.hp - dmg);
+            if (target.hp <= 0) {
+                document.getElementById(`card-${target.id}`).classList.add('defeated');
+                addLog(`${target.name}を倒した！`);
             }
         }
 
-        function calculateDamage(baseAtk) {
-            const varience = 0.9 + Math.random() * 0.2; // 0.9 ~ 1.1
-            return Math.floor(baseAtk * varience);
+        function updateStatusAll() {
+            [...playerParty, ...enemyParty].forEach(c => {
+                const hpBar = document.getElementById(`hp-bar-${c.id}`);
+                const hpText = document.getElementById(`hp-text-${c.id}`);
+                const spBar = document.getElementById(`sp-bar-${c.id}`);
+                const spText = document.getElementById(`sp-text-${c.id}`);
+                if (hpBar) hpBar.style.width = `${(c.hp / c.maxHp) * 100}%`;
+                if (hpText) hpText.textContent = `${c.hp} / ${c.maxHp}`;
+                if (spBar) spBar.style.width = `${c.sp}%`;
+                if (spText) spText.textContent = `${c.sp}%`;
+            });
+        }
+
+        function checkWinLoss() {
+            if (enemyParty.every(e => e.hp <= 0)) {
+                currentStage++;
+                if (currentStage >= STAGES.length) {
+                    showOverlay('VICTORY', '魔王を討伐し、世界に平和が訪れた！', 'タイトルへ', 'victory');
+                } else {
+                    addLog(`敵を全滅させた！ 次の戦いへ...`);
+                    setTimeout(loadStage, 1500);
+                }
+                return true;
+            }
+            if (playerParty.every(p => p.hp <= 0)) {
+                showOverlay('DEFEAT', 'パーティが全滅した...', 'リトライ', 'defeat');
+                return true;
+            }
+            return false;
         }
 
         function updateCommandUI() {
             const specBtn = document.getElementById('btn-special');
-            const specCooldown = document.getElementById('special-cooldown');
-            if (player.specialCooldown > 0) {
-                specBtn.classList.add('disabled');
-                specCooldown.textContent = player.specialCooldown;
-            } else {
+            if (activeChar && activeChar.sp >= 100) {
                 specBtn.classList.remove('disabled');
-                specCooldown.textContent = '';
+                specBtn.classList.add('ready');
+            } else {
+                specBtn.classList.add('disabled');
+                specBtn.classList.remove('ready');
             }
-
-            const itemBtn = document.getElementById('btn-item');
-            if (player.itemCount <= 0) {
-                itemBtn.classList.add('disabled');
-            }
-        }
-
-        // === ダメージ演出 ===
-        function showDamageEffect(target, dmg, isSpecial = false) {
-            const flash = document.getElementById('damage-flash');
-            flash.className = 'damage-flash';
-            void flash.offsetWidth;
-            flash.classList.add(target === 'player' ? 'player-hit' : 'enemy-hit');
-
-            const avatarId = target === 'player' ? 'player-avatar' : 'enemy-avatar';
-            const avatar = document.getElementById(avatarId);
-            avatar.classList.remove('shake', 'hit-effect');
-            void avatar.offsetWidth;
-            avatar.classList.add('shake');
-            if (isSpecial) avatar.classList.add('hit-effect');
-
-            const popup = document.createElement('div');
-            popup.className = `damage-popup ${target === 'player' ? 'to-player' : 'to-enemy'}`;
-            if (isSpecial) popup.style.fontSize = '2.5rem';
-            popup.textContent = `-${dmg}`;
-            avatar.appendChild(popup);
-            setTimeout(() => popup.remove(), 1000);
-        }
-
-        function updateHpBars() {
-            const pPct = (player.hp / player.maxHp) * 100;
-            const ePct = (enemyHp / enemyMaxHp) * 100;
-            document.getElementById('player-hp-bar').style.width = `${pPct}%`;
-            document.getElementById('enemy-hp-bar').style.width = `${ePct}%`;
-            document.getElementById('player-hp-text').textContent = `${player.hp} / ${player.maxHp}`;
-            document.getElementById('enemy-hp-text').textContent = `${enemyHp} / ${enemyMaxHp}`;
-            
-            // 色の変化
-            const pBar = document.getElementById('player-hp-bar');
-            if (pPct < 25) pBar.style.background = 'linear-gradient(90deg, #ff0000, #ff4444)';
-            else if (pPct < 50) pBar.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)';
-            else pBar.style.background = 'linear-gradient(90deg, #00aaff, #00ddff)';
         }
 
         function disableCommands(disabled) {
             document.querySelectorAll('.command-btn').forEach(b => {
-                if (!b.classList.contains('disabled') || !disabled) {
-                    b.style.pointerEvents = disabled ? 'none' : 'auto';
-                    b.style.opacity = disabled ? '0.6' : '1';
-                }
+                b.style.pointerEvents = disabled ? 'none' : 'auto';
+                b.style.opacity = disabled ? '0.6' : '1';
             });
         }
 
-        function enemyDefeated() {
-            const enemy = ENEMIES[stage];
-            stage++;
-            addLog(`${enemy.name}を撃破した！`);
-
-            if (stage >= ENEMIES.length) {
-                showOverlay('VICTORY', `魔王の脅威は去った！\n${player.name}の伝説が今始まる…`, '冒険を終える', 'victory');
-            } else {
-                setTimeout(() => {
-                    addLog(`次のステージへ進みます…`);
-                    setTimeout(() => {
-                        loadEnemy();
-                        isTurnTransition = false;
-                        disableCommands(false);
-                    }, 1000);
-                }, 800);
-            }
+        function showDamageEffect(id, dmg, isCrit = false) {
+            const avatar = document.getElementById(`avatar-${id}`);
+            if (!avatar) return;
+            avatar.classList.remove('shake', 'hit-effect');
+            void avatar.offsetWidth;
+            avatar.classList.add('shake');
+            if (isCrit) avatar.classList.add('hit-effect');
+            
+            const p = document.createElement('div');
+            p.className = 'damage-popup';
+            p.textContent = `-${dmg}`;
+            avatar.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
         }
 
         function gameOver() {
-            showOverlay('DEFEAT', `力及ばず、${player.name}は倒れた…`, 'リトライ', 'defeat');
+            showOverlay('DEFEAT', `負けてしまった...<br>ガチャで強いキャラクターを手に入れて再挑戦しよう！`, 'リトライ', 'defeat');
         }
 
         function showOverlay(title, sub, btnText, type) {
@@ -378,11 +568,12 @@
         }
 
         function overlayAction() {
-            if (document.getElementById('overlay-btn').textContent === '冒険を終える') {
+            const btnText = document.getElementById('overlay-btn').textContent;
+            if (btnText === 'タイトルへ') {
                 location.href = 'index.html';
                 return;
             }
-            location.reload();
+            location.reload(); // リトライなどの場合はリロード
         }
 
         function addLog(msg) {
@@ -398,4 +589,5 @@
         init();
     </script>
 </body>
+
 </html>
