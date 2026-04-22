@@ -71,24 +71,15 @@
             position: absolute;
             background: #fff;
             border-radius: 50%;
-            opacity: 0.3;
-            animation: float 20s linear infinite;
+            opacity: 0;
+            animation: float linear infinite;
         }
 
         @keyframes float {
-            0% {
-                transform: translateY(100vh) scale(0);
-                opacity: 0;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-
-            100% {
-                transform: translateY(-10vh) scale(1);
-                opacity: 0;
-            }
+            0% { transform: translateY(0) scale(0); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-110vh) scale(1); opacity: 0; }
         }
 
         .title-container {
@@ -317,15 +308,19 @@
     <script>
         // パーティクル生成
         const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 300; i++) {
+        for (let i = 0; i < 500; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
             const size = Math.random() * 3 + 1;
             p.style.width = size + 'px';
             p.style.height = size + 'px';
+            
+            // 最初から画面全体に散らばるように配置
             p.style.left = Math.random() * 100 + 'vw';
-            p.style.animationDuration = (Math.random() * 15 + 10) + 's';
-            p.style.animationDelay = (Math.random() * 10) + 's';
+            p.style.top = Math.random() * 100 + 'vh';
+            
+            p.style.animationDuration = (Math.random() * 15 + 15) + 's';
+            p.style.animationDelay = (Math.random() * -30) + 's'; // 負のディレイで既に動いている状態にする
             particlesContainer.appendChild(p);
         }
     </script>
