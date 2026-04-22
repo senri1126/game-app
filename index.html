@@ -4,810 +4,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Simulator</title>
-    <!-- 明朝体とゴシック体をロード -->
+    <title>RPG Gacha Game - Top</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.5">
-    <link rel="stylesheet" href="index.css?v=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: #050505;
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            /* ボタンを下に */
+        }
+
+        .menu-bar {
+            width: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 70%, transparent 100%);
+            padding: 60px 0 80px 0;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+            animation: slideUp 1.2s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .bg-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: url('image/タイトル画像.png');
+            background-size: 80% auto; /* サイズを少し小さく */
+            background-position: center 95%; /* さらに下に下げる */
+            background-repeat: no-repeat;
+        }
+
+        /* アニメーションする光の粉 */
+        .particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-10vh) scale(1);
+                opacity: 0;
+            }
+        }
+
+        .title-container {
+            text-align: center;
+            z-index: 10;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        .title-img {
+            max-width: 80vw;
+            max-height: 50vh;
+            filter: drop-shadow(0 0 30px rgba(255, 200, 0, 0.3));
+            margin-bottom: 40px;
+        }
+
+        .portal-buttons {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .portal-btn {
+            position: relative;
+            width: 200px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            font-family: 'Shippori Mincho', serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: 4px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .portal-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: 0.5s;
+        }
+
+        .portal-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #ffcc00;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 200, 0, 0.2);
+            color: #ffcc00;
+        }
+
+        .portal-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-sub {
+            display: block;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .portal-btn:hover .btn-sub {
+            color: #aa8800;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.7rem;
+            color: #444;
+        }
+
+        /* ゲームタイトルロゴ（スターレイル風） */
+        .game-logo {
+            position: absolute;
+            bottom: 190px; /* さらに少し下へ */
+            left: 5%;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            animation: logoFadeIn 2s ease-out;
+            pointer-events: none;
+        }
+
+        .logo-main {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 3.2rem; /* サイズ縮小 */
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -1px;
+            color: #fff;
+            text-transform: uppercase;
+            line-height: 0.9;
+            position: relative;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        .logo-main::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 110%;
+            height: 2px;
+            background: linear-gradient(90deg, #fff, transparent);
+            transform: skewX(-20deg);
+        }
+
+        .logo-sub {
+            font-family: 'Shippori Mincho', serif;
+            font-size: 1.3rem; /* サイズ縮小 */
+            font-weight: 800;
+            color: #fff2cc; /* より明るい発色に変更 */
+            margin-top: 10px;
+            margin-left: 10px;
+            letter-spacing: 0.3em;
+            text-shadow: 0 0 15px rgba(255, 220, 100, 0.8);
+            border-left: 3px solid #ffcc00;
+            padding-left: 12px;
+        }
+
+        /* ロゴに走る光のエフェクト */
+        .logo-flare {
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: skewX(-30deg);
+            animation: flareMove 8s infinite linear;
+        }
+
+        @keyframes flareMove {
+            0% { left: -150%; }
+            20% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        @keyframes logoFadeIn {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+            @media (max-width: 768px) {
+                .logo-main {
+                    font-size: 2.5rem;
+                }
+
+                .logo-sub {
+                    font-size: 1.2rem;
+                }
+
+                .game-logo {
+                    top: 5%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    align-items: center;
+                }
+
+                .logo-sub {
+                    border-left: none;
+                    border-bottom: 2px solid #ffcc00;
+                    padding-left: 0;
+                    padding-bottom: 5px;
+                }
+            }
+    </style>
 </head>
 
 <body>
+    <div class="bg-container"></div>
+    <div class="particles" id="particles"></div>
 
-    <!-- ================= 画面1: タイトル画面 ================= -->
-    <div id="title-screen" class="warp-container">
-        <!-- 図鑑へのリンクボタン（右上） -->
-        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 100;">
-            <a href="game.html" class="archive-link-btn" style="background: rgba(150, 0, 0, 0.4); border-color: #ff4444; position: static;">
-                <span>⚔️</span> 戦闘
+    <div class="game-logo">
+        <div class="logo-main">
+            STAR STRIKER
+            <div class="logo-flare"></div>
+        </div>
+        <div class="logo-sub">星界の咆哮</div>
+    </div>
+
+    <!-- 下部の黒い帯メニュー -->
+    <div class="menu-bar">
+        <div class="portal-buttons">
+            <a href="gacha.html" class="portal-btn">
+                GACHA
+                <span class="btn-sub">ガチャを引く</span>
             </a>
-            <a href="archive.html" class="archive-link-btn" style="position: static;">
-                <span>📖</span> 図鑑
+            <a href="game.html" class="portal-btn" style="border-color: rgba(255, 50, 50, 0.4);">
+                BATTLE
+                <span class="btn-sub">戦闘を開始する</span>
+            </a>
+            <a href="archive.html" class="portal-btn" style="border-color: rgba(0, 168, 255, 0.4);">
+                ARCHIVE
+                <span class="btn-sub">図鑑を確認する</span>
             </a>
         </div>
-
-        <div class="button-group">
-            <!-- 1回引くボタン -->
-            <div class="hsr-warp-button" onclick="startGachaProcess(1, this)">
-                <span class="text-main">1回引く</span>
-                <span class="text-sub">SINGLE WARP</span>
-            </div>
-
-            <!-- 10回引くボタン -->
-            <div class="hsr-warp-button" onclick="startGachaProcess(10, this)">
-                <span class="text-main">10回引く</span>
-                <span class="text-sub">MULTI WARP (10)</span>
-            </div>
-        </div>
-
-        <!-- 排出確率ボタン（右下） -->
-        <a href="probability.html" class="prob-link-btn">排出確率</a>
     </div>
 
-    <!-- ================= 画面2: 演出画面 ================= -->
-    <div id="anim-screen">
-        <button class="skip-btn" onclick="skipEffect()">SKIP</button>about:blank#blocked
-        <div class="space-stage" id="star-field"></div>
-        <div class="ticket-container">
-            <!-- チケット画像 -->
-            <img id="anim-ticket" src="image/ガチャ/チケット.png" class="gacha-ticket" alt="Ticket">
-        </div>
-        <div id="portal"></div>
-    </div>
+    <footer>&copy; 2026 Gacha RPG Project</footer>
 
-    <!-- ================= 画面3: 結果画面 ================= -->
-    <div id="result-screen">
-        <div id="result-cards" class="result-container">
-            <!-- JSでここにカードが生成されます -->
-        </div>
-        <div class="result-actions">
-            <button class="btn-simple" onclick="returnToTitle()">タイトルへ戻る</button>
-        </div>
-    </div>
-
-    <!-- ================= 画面3: キャラ登場詳細（全身表示） ================= -->
-    <div id="reveal-screen" onclick="nextReveal()">
-        <div id="reveal-fx"></div> <!-- 特殊エフェクト用 -->
-        <div class="reveal-bg-glow"></div>
-        <img id="reveal-bg-img" src="" alt="Background" style="display:none;">
-        <img id="reveal-img" src="" alt="Reveal">
-        <div id="reveal-info">
-            <!-- 名前と二つ名を分けて表示 -->
-            <h2 id="reveal-name"></h2>
-            <!-- レアリティを下へ -->
-            <div id="reveal-stars" class="stars"></div>
-        </div>
-    </div>
-
-    <!-- ホワイトアウト用共通レイヤー -->
-    <div id="flash" class="whiteout"></div>
-
-    <!-- ================= JavaScriptロジック ================= -->
     <script>
-        // --- 1. キャラクターデータベース ---
-        // ※ imgのURLはご自身の画像URLに書き換えてください。
-        const CHAR_DB = {
-            5: [
-                { name: "【星の狩人】サム", img: "image/ガチャ/「【星の狩人】サム」星5.png" },
-                { name: "【ホワイトホール】ホーリードラゴン", img: "image/ガチャ/「【ホワイトホール】ホーリードラゴン」星5.png" },
-                { name: "【銀河の妖狐】アルタイル", img: "image/ガチャ/「【銀河の妖狐】アルタイル」星5.png" }
-            ],
-            4: [
-                { name: "ゴールドゴーレム", img: "image/ガチャ/「ゴールドゴーレム」星4.png" },
-                { name: "ソード将軍", img: "image/ガチャ/「ソード将軍」星4.png" },
-                { name: "ドラゴンベビー", img: "image/ガチャ/「ドラゴンベビー」星4.png" },
-                { name: "口裂け女", img: "image/ガチャ/「口裂け女」星4.png" },
-                { name: "聖ユニコーン", img: "image/ガチャ/「聖ユニコーン」星4.png" }
-            ],
-            3: [
-                { name: "モブ兵士A", img: "image/ガチャ/「モブ兵士A」星3.png" },
-                { name: "モブ兵士B", img: "image/ガチャ/「モブ兵士B」星3.png" },
-                { name: "ゴブリン", img: "image/ガチャ/「ゴブリン」星3.png" },
-                { name: "セイレーン", img: "image/ガチャ/「セイレーン」星3.png" },
-                { name: "ミノタウロス", img: "image/ガチャ/「ミノタウロス」星3.png" },
-                { name: "河童", img: "image/ガチャ/「河童」星3.png" },
-                { name: "狼男", img: "image/ガチャ/「狼男」星3.png" }
-            ]
-        };
-
-        // --- 2. 状態管理 ---
-        let tenPullPityCount = 0; // 10連で星5が出なかった回数をカウント
-        let isAnimationSkipped = false;
-        let activePullResults = [];
-        let characterEffectTimer = null; // 特定キャラの画像切り替え用タイマー
-        let revealTimeouts = []; // 演出用のタイマー（setTimeout）を管理
-        let currentRevealId = 0; // 現在進行中の演出ID（連打や競合の防止）
-
-        // 獲得済みキャラの管理（localStorage版）
-        const OBTAINED_KEY = 'game_app_obtained_chars';
-        const obtainedChars = new Set(JSON.parse(localStorage.getItem(OBTAINED_KEY) || '[]'));
-
-        function clearRevealEffects() {
-            // インターバルタイマーのクリア
-            if (characterEffectTimer) {
-                clearInterval(characterEffectTimer);
-                characterEffectTimer = null;
-            }
-            // 全ての待機中タイムアウトをクリア
-            revealTimeouts.forEach(t => clearTimeout(t));
-            revealTimeouts = [];
-
-            // 演出用レイヤーのクリア
-            const fxLayer = document.getElementById('reveal-fx');
-            if (fxLayer) {
-                fxLayer.className = '';
-                fxLayer.innerHTML = '';
-            }
-
-            // 画像のリセット
-            const emptyImg = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            const img = document.getElementById('reveal-img');
-            if (img) {
-                img.onload = null;
-                img.src = emptyImg;
-                img.style.filter = '';
-                img.style.opacity = '0';
-            }
-            const bgImg = document.getElementById('reveal-bg-img');
-            if (bgImg) {
-                bgImg.onload = null;
-                bgImg.src = emptyImg;
-                bgImg.style.filter = '';
-                bgImg.style.display = 'none';
-            }
-
-            // 画面状態のリセット
-            const screen = document.getElementById('reveal-screen');
-            if (screen) {
-                screen.classList.remove('revealed', 'preview-mode');
-            }
+        // パーティクル生成
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 300; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 3 + 1;
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            p.style.animationDelay = (Math.random() * 10) + 's';
+            particlesContainer.appendChild(p);
         }
-
-        function trackCharacter(name) {
-            const isNew = !obtainedChars.has(name);
-            if (isNew) {
-                obtainedChars.add(name);
-                localStorage.setItem(OBTAINED_KEY, JSON.stringify([...obtainedChars]));
-            }
-            return isNew;
-        }
-
-        // --- 3. ガチャ抽選ロジック ---
-
-        // 配列からランダムに1つ選ぶヘルパー関数
-        function getRandomItem(array) {
-            return array[Math.floor(Math.random() * array.length)];
-        }
-
-        // 単発抽選
-        function rollSingle() {
-            const rand = Math.random() * 100;
-            let rarity = 3;
-            if (rand < 2.4) rarity = 5;
-            else if (rand < 7.4) rarity = 4;
-
-            const char = getRandomItem(CHAR_DB[rarity]);
-            const isNew = trackCharacter(char.name);
-
-            return { rarity, data: char, isNew };
-        }
-
-        // 10連抽選
-        function rollTen() {
-            let results = [];
-            let hasStar4OrHigher = false;
-            let hasStar5 = false;
-
-            // 天井判定 (5回連続で外れていれば、今回は星5確定枠を1つ付与)
-            if (tenPullPityCount >= 5) {
-                const char = getRandomItem(CHAR_DB[5]);
-                const isNew = trackCharacter(char.name);
-                results.push({ rarity: 5, data: char, isNew });
-                hasStar5 = true;
-                // hasStar4OrHigher はここでは立てず、残りの9枠で別途保障を判定させる
-                tenPullPityCount = 0; // 天井リセット
-            }
-
-            // 残りの枠を抽選
-            while (results.length < 10) {
-                const result = rollSingle();
-                if (result.rarity === 5) hasStar5 = true;
-                if (result.rarity >= 4) hasStar4OrHigher = true;
-                results.push(result);
-            }
-
-            // 【確定枠処理】すべて星3だった場合、最後の1枠を強制的に星4にする
-            if (!hasStar4OrHigher) {
-                const char = getRandomItem(CHAR_DB[4]);
-                const isNew = trackCharacter(char.name);
-                results[9] = { rarity: 4, data: char, isNew };
-            }
-
-            // カウントの更新
-            if (hasStar5) {
-                tenPullPityCount = 0; // 星5が出たらリセット
-            } else {
-                tenPullPityCount++;   // 出なかったらカウントアップ
-            }
-
-            const pityEl = document.getElementById('pity-counter-display');
-            if (pityEl) pityEl.innerText = tenPullPityCount;
-
-            // 結果をシャッフル（確定枠が常に最初/最後に固まらないように）
-            return results.sort(() => Math.random() - 0.5);
-        }
-
-        // --- 4. メインシーケンス制御 ---
-
-        async function startGachaProcess(times, btnElement) {
-            // ボタンアニメーション発火
-            btnElement.classList.add('launching');
-            const flash = document.getElementById('flash');
-
-            // 1. 抽選の実行
-            let pullResults = [];
-            if (times === 1) {
-                pullResults.push(rollSingle());
-            } else {
-                pullResults = rollTen();
-            }
-
-            // 2. 引いた中での「最高レアリティ」を特定
-            const maxRarity = Math.max(...pullResults.map(item => item.rarity));
-
-            // ホワイトアウトさせてから画面切り替え
-            setTimeout(() => {
-                flash.classList.add('active-whiteout');
-
-                setTimeout(() => {
-                    // タイトルを隠し、アニメーション画面の準備
-                    document.getElementById('title-screen').style.display = 'none';
-                    btnElement.classList.remove('launching'); // 状態戻す
-
-                    // アニメーション実行へ
-                    playIntroAnimation(maxRarity, pullResults);
-                }, 400); // 画面が白くなったタイミングで切り替え
-            }, 600); // ボタンが飛んでいくのを待つ
-        }
-
-        // --- 5. 演出アニメーション ---
-
-        async function playIntroAnimation(maxRarity, pullResults) {
-            const animScreen = document.getElementById('anim-screen');
-            const flash = document.getElementById('flash');
-            const ticket = document.getElementById('anim-ticket');
-            const portal = document.getElementById('portal');
-            const starField = document.getElementById('star-field');
-
-            // レアリティに応じた色の設定
-            let glowColor, bgAccent;
-            if (maxRarity === 5) { glowColor = '#ffd700'; bgAccent = '#3a2b00'; }
-            else if (maxRarity === 4) { glowColor = '#c724b1'; bgAccent = '#2a0845'; }
-            else { glowColor = '#00a8ff'; bgAccent = '#091e3b'; }
-
-            document.documentElement.style.setProperty('--anim-glow', glowColor);
-            document.documentElement.style.setProperty('--anim-bg', bgAccent);
-
-            // ホワイトアウト解除し、アニメーション画面表示
-            animScreen.style.display = 'block';
-            flash.classList.remove('active-whiteout');
-
-            // 星の生成
-            starField.innerHTML = '';
-            for (let i = 0; i < 60; i++) {
-                const s = document.createElement('div');
-                s.className = 'star-line';
-                s.style.top = Math.random() * 100 + '%';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.width = (Math.random() * 200 + 100) + 'px';
-                s.style.animationDelay = (Math.random() * 0.4) + 's';
-                starField.appendChild(s);
-            }
-
-            activePullResults = pullResults;
-            isAnimationSkipped = false;
-
-            // --- アニメーション再生 ---
-            // 1. チケット舞う
-            ticket.classList.add('animate-ticket');
-            if (await smartWait(1800)) return;
-
-            // 2. ワープ加速
-            starField.classList.add('warp-active');
-            if (await smartWait(800)) return;
-
-            // 3. ポータル爆発
-            portal.classList.add('portal-expand');
-            if (await smartWait(1200)) return;
-
-            // 4. ホワイトアウトして結果画面へ
-            flash.classList.add('active-whiteout');
-            if (await smartWait(600)) return;
-
-            // クリーンアップ
-            finishAnimation();
-        }
-
-        // スキップ対応の待機関数
-        async function smartWait(ms) {
-            return new Promise(resolve => {
-                const check = setInterval(() => {
-                    if (isAnimationSkipped) {
-                        clearInterval(check);
-                        resolve(true); // スキップされた
-                    }
-                }, 50);
-                setTimeout(() => {
-                    clearInterval(check);
-                    resolve(false); // 時間通り終了
-                }, ms);
-            });
-        }
-
-        function skipEffect() {
-            isAnimationSkipped = true;
-            finishAnimation();
-        }
-
-        function finishAnimation() {
-            const animScreen = document.getElementById('anim-screen');
-            const flash = document.getElementById('flash');
-            const ticket = document.getElementById('anim-ticket');
-            const starField = document.getElementById('star-field');
-            const portal = document.getElementById('portal');
-
-            animScreen.style.display = 'none';
-            ticket.classList.remove('animate-ticket');
-            starField.classList.remove('warp-active');
-            portal.classList.remove('portal-expand');
-            flash.classList.remove('active-whiteout');
-
-            // 新規キャラ演出シーケンスへ
-            startRevealSequence(activePullResults);
-        }
-
-        // --- 6. 新規キャラ演出シーケンス ---
-        let pendingResults = [];
-        let revealQueue = [];
-        let currentRevealIndex = 0;
-
-        // 前の関数の重複定義を削除
-
-        async function startRevealSequence(results) {
-            pendingResults = results;
-            // 星4か星5を演出対象とする（新規取得シミュレーション）
-            revealQueue = results.filter(item => item.rarity >= 4);
-            currentRevealIndex = 0;
-
-            if (revealQueue.length > 0) {
-                showNextReveal();
-            } else {
-                showResultScreen(pendingResults);
-            }
-        }
-
-        function showNextReveal() {
-            const revealId = ++currentRevealId;
-            const item = revealQueue[currentRevealIndex];
-            const screen = document.getElementById('reveal-screen');
-            const img = document.getElementById('reveal-img');
-            const bgImg = document.getElementById('reveal-bg-img');
-            const nameEl = document.getElementById('reveal-name');
-            const starsEl = document.getElementById('reveal-stars');
-            const flash = document.getElementById('flash');
-
-            // === 1. 状態と演出の完全リセット ===
-            clearRevealEffects();
-            screen.classList.remove('revealed');
-            screen.style.display = 'none';
-            flash.classList.remove('active-whiteout');
-
-            // 演出クラスを全て外す
-            img.classList.remove('char-breathing', 'char-altair-breathing', 'char-sam-breathing', 'char-dragon-breathing');
-            img.style.opacity = '0';
-            img.style.filter = 'brightness(0)';
-            img.classList.remove('silhouette-transition');
-
-            // 背景画像のリセット（clearRevealEffectsで既に行われているが、念のため透明度とフィルタを初期化）
-            bgImg.style.filter = 'brightness(0)';
-            bgImg.classList.remove('silhouette-transition');
-
-            // 名前のパース（【二つ名】名前 の形式なら分ける）
-            const fullName = item.data.name;
-            const match = fullName.match(/^(【.+?】)(.+)$/);
-            if (match) {
-                nameEl.innerHTML = `<div style="font-size: 1.4rem; opacity: 0.9; margin-bottom: 5px;">${match[1]}</div><div>${match[2]}</div>`;
-            } else {
-                nameEl.innerHTML = `<div>${fullName}</div>`;
-            }
-
-            let starStr = "";
-            for (let i = 0; i < item.rarity; i++) starStr += "✦";
-            starsEl.innerText = starStr;
-            starsEl.className = `stars star${item.rarity}`;
-
-            // アルタイルは背景画像を先にセット（シルエットとして表示するため）
-            if (item.data.name.includes('アルタイル')) {
-                bgImg.src = 'image/ガチャ/アルタイル背景.png';
-                bgImg.style.display = 'block';
-            }
-
-            // === 2. 画像を読み込み、シルエットとして画面に表示 ===
-            img.onload = () => {
-                // リセット時や古いリクエストのonloadは無視
-                if (revealId !== currentRevealId) return;
-                if (img.src.startsWith('data:image/gif')) return;
-
-                // 表示中のキャラの画像（1枚目または2枚目）であることを確認
-                const expectedImg = item.data.img.split('/').pop().replace(/」$/, '');
-                if (!img.src.includes(encodeURI(expectedImg))) return;
-
-                // 演出途中での切り替え（サム2等）の時は、透明度を戻すだけ
-                if (img.src.includes('2.png') || img.src.includes('アルタイル2')) {
-                    img.style.opacity = '1';
-                    return;
-                }
-
-                // シルエット状態で画面を表示
-                img.style.opacity = '1'; // brightness(0)なので真っ黒のまま見える
-                if (bgImg.src && bgImg.src !== location.href) bgImg.style.display = 'block';
-                screen.style.display = 'flex';
-
-                // === 3. 1秒後にシルエット解除（明転） ===
-                const t1 = setTimeout(() => {
-                    img.classList.add('silhouette-transition');
-                    bgImg.classList.add('silhouette-transition');
-                    // トランジションを付けてからfilterを変える→滑らかに明転
-                    requestAnimationFrame(() => {
-                        img.style.filter = 'brightness(1)';
-                        bgImg.style.filter = 'brightness(1)';
-                        screen.classList.add('revealed');
-                    });
-                }, 1000);
-                revealTimeouts.push(t1);
-
-                // === 4. 明転完了後（+1s）に演出を開始 ===
-                const t2 = setTimeout(() => {
-                    // トランジションクラスのみ外す（呼吸アニメの邪魔をしない）
-                    img.classList.remove('silhouette-transition');
-                    bgImg.classList.remove('silhouette-transition');
-                    // filterはbrightness(1)を維持
-
-                    // キャラごとの演出クラスを付与
-                    const fxLayer = document.getElementById('reveal-fx');
-                    if (item.data.name.includes('サム')) {
-                        img.classList.add('char-sam-breathing');
-                        fxLayer.classList.add('sam-fx');
-
-                        const firstImgSrc = item.data.img;
-                        const secondImgSrc = firstImgSrc.replace('」', '2」');
-                        const preload = new Image();
-                        preload.src = secondImgSrc;
-
-                        const startTime = Date.now();
-                        characterEffectTimer = setInterval(() => {
-                            const elapsed = (Date.now() - startTime) % 8000;
-                            if (elapsed > 5200 && elapsed < 7800) {
-                                if (!img.src.includes('2.png')) {
-                                    img.style.opacity = '0';
-                                    img.src = secondImgSrc;
-                                }
-                            } else {
-                                if (img.src.includes('2.png')) {
-                                    img.style.opacity = '0';
-                                    img.src = firstImgSrc;
-                                }
-                            }
-                        }, 100);
-                    } else if (item.data.name.includes('ホーリードラゴン')) {
-                        img.classList.add('char-dragon-breathing');
-                        fxLayer.classList.add('dragon-fx');
-
-                        const shockwave = document.createElement('div');
-                        shockwave.className = 'dragon-shockwave';
-                        fxLayer.appendChild(shockwave);
-
-                        for (let i = 0; i < 20; i++) {
-                            const meteor = document.createElement('img');
-                            meteor.className = 'dragon-meteor';
-                            meteor.src = i % 2 === 0 ? 'image/ガチャ/隕石.png' : 'image/ガチャ/隕石2.png';
-                            meteor.style.left = `${Math.random() * 120 - 10}%`;
-                            meteor.style.animationDelay = `${Math.random() * 1.5}s`;
-                            meteor.style.setProperty('--meteor-scale', 0.5 + Math.random() * 1.5);
-                            fxLayer.appendChild(meteor);
-                        }
-                    } else if (item.data.name.includes('アルタイル')) {
-                        img.classList.add('char-altair-breathing');
-                        fxLayer.classList.add('altair-fx');
-
-                        const firstImgSrc = item.data.img;
-                        const secondImgSrc = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
-                        const preload = new Image();
-                        preload.src = secondImgSrc;
-
-                        const afterAnim1 = document.createElement('img');
-                        afterAnim1.className = 'altair-afterimage altair-afterimage-1';
-                        afterAnim1.src = firstImgSrc;
-                        fxLayer.appendChild(afterAnim1);
-
-                        const afterAnim2 = document.createElement('img');
-                        afterAnim2.className = 'altair-afterimage altair-afterimage-2';
-                        afterAnim2.src = secondImgSrc;
-                        fxLayer.appendChild(afterAnim2);
-
-                        const attackFx = document.createElement('img');
-                        attackFx.className = 'altair-charge-img';
-                        attackFx.src = 'image/ガチャ/アルタイルエフェクト.png';
-                        fxLayer.appendChild(attackFx);
-
-                        const pillarFx = document.createElement('div');
-                        pillarFx.className = 'altair-fire-pillar';
-                        fxLayer.appendChild(pillarFx);
-
-                        const startTime = Date.now();
-                        characterEffectTimer = setInterval(() => {
-                            const elapsed = (Date.now() - startTime) % 10000;
-                            if (elapsed > 6400 && elapsed < 8500) {
-                                if (!img.src.includes('アルタイル2')) {
-                                    img.style.opacity = '0';
-                                    img.src = secondImgSrc;
-                                }
-                            } else {
-                                if (img.src.includes('アルタイル2')) {
-                                    img.style.opacity = '0';
-                                    img.src = firstImgSrc;
-                                }
-                            }
-                        }, 100);
-                    } else if (item.rarity === 5) {
-                        img.classList.add('char-breathing');
-                    }
-                }, 2200); // 1秒wait + 1.2秒transition
-                revealTimeouts.push(t2);
-            };
-
-            img.src = item.data.img;
-        }
-
-        function nextReveal() {
-            const screen = document.getElementById('reveal-screen');
-            if (!screen.classList.contains('revealed')) return;
-
-            // プレビューモード（リザルトからの個別表示）の場合は閉じるだけ
-            if (screen.classList.contains('preview-mode')) {
-                clearRevealEffects();
-                screen.style.display = 'none';
-                screen.classList.remove('preview-mode');
-                return;
-            }
-
-            currentRevealIndex++;
-            if (currentRevealIndex < revealQueue.length) {
-                // 次のレアキャラがいれば表示
-                showNextReveal();
-            } else {
-                // 全員表示し終えたらリザルト画面へ
-                clearRevealEffects();
-                screen.style.display = 'none';
-                showResultScreen(pendingResults);
-            }
-        }
-
-        // リザルト画面から個別に詳細を表示する関数
-        function showCharacterDetail(item) {
-            clearRevealEffects();
-
-            const screen = document.getElementById('reveal-screen');
-            const img = document.getElementById('reveal-img');
-            const bgImg = document.getElementById('reveal-bg-img');
-            const nameEl = document.getElementById('reveal-name');
-            const starsEl = document.getElementById('reveal-stars');
-
-            img.style.opacity = '1';
-            img.style.filter = ''; // シルエット状態をリセット
-            img.onload = () => {
-                if (revealId !== currentRevealId) return;
-                const expectedImg = item.data.img.split('/').pop().replace(/」$/, '');
-                if (!img.src.includes(encodeURI(expectedImg))) return;
-                
-                img.style.opacity = '1';
-                img.style.filter = 'brightness(1)';
-            };
-            img.src = item.data.img;
-            
-            // 背景画像のリセット（clearRevealEffectsで既に行われている）
-            // 特定キャラのみ後続のロジックで再表示される
-
-            // 名前のパース
-            const fullName = item.data.name;
-            const match = fullName.match(/^(【.+?】)(.+)$/);
-            if (match) {
-                nameEl.innerHTML = `<div style="font-size: 1.4rem; opacity: 0.9; margin-bottom: 5px;">${match[1]}</div><div>${match[2]}</div>`;
-            } else {
-                nameEl.innerHTML = `<div>${fullName}</div>`;
-            }
-
-            let starStr = "";
-            for (let i = 0; i < item.rarity; i++) starStr += "✦";
-            starsEl.innerText = starStr;
-            starsEl.className = `stars star${item.rarity}`;
-
-            // 星5なら演出（特定キャラは特殊）
-            img.classList.remove('char-breathing', 'char-altair-breathing', 'char-sam-breathing', 'char-dragon-breathing');
-            const fxLayer = document.getElementById('reveal-fx');
-            fxLayer.className = '';
-            fxLayer.innerHTML = '';
-
-            if (item.data.name.includes('サム')) {
-                img.classList.add('char-sam-breathing');
-                fxLayer.classList.add('sam-fx');
-
-                const firstImgSrc = item.data.img;
-                const secondImgSrc = firstImgSrc.replace('」', '2」');
-                const preload = new Image();
-                preload.src = secondImgSrc;
-
-                const startTime = Date.now();
-                characterEffectTimer = setInterval(() => {
-                    const elapsed = (Date.now() - startTime) % 8000;
-                    if (elapsed > 5200 && elapsed < 7800) {
-                        if (!img.src.includes('2.png')) {
-                            img.style.opacity = '0';
-                            img.src = secondImgSrc;
-                        }
-                    } else {
-                        if (img.src.includes('2.png')) {
-                            img.style.opacity = '0';
-                            img.src = firstImgSrc;
-                        }
-                    }
-                }, 100);
-            } else if (item.data.name.includes('ホーリードラゴン')) {
-                img.classList.add('char-dragon-breathing');
-                fxLayer.classList.add('dragon-fx');
-
-                const shockwave = document.createElement('div');
-                shockwave.className = 'dragon-shockwave';
-                fxLayer.appendChild(shockwave);
-
-                for (let i = 0; i < 20; i++) {
-                    const meteor = document.createElement('img');
-                    meteor.className = 'dragon-meteor';
-                    meteor.src = i % 2 === 0 ? 'image/ガチャ/隕石.png' : 'image/ガチャ/隕石2.png';
-                    meteor.style.left = `${Math.random() * 120 - 10}%`;
-                    meteor.style.animationDelay = `${Math.random() * 1.5}s`;
-                    meteor.style.setProperty('--meteor-scale', 0.5 + Math.random() * 1.5);
-                    fxLayer.appendChild(meteor);
-                }
-            } else if (item.data.name.includes('アルタイル')) {
-                img.classList.add('char-altair-breathing');
-                fxLayer.classList.add('altair-fx');
-                bgImg.src = 'image/ガチャ/アルタイル背景.png';
-                bgImg.style.display = 'block';
-
-                const firstImgSrc = item.data.img;
-                const secondImgSrc = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
-                const preload = new Image();
-                preload.src = secondImgSrc;
-
-                const afterAnim1 = document.createElement('img');
-                afterAnim1.className = 'altair-afterimage altair-afterimage-1';
-                afterAnim1.src = firstImgSrc;
-                fxLayer.appendChild(afterAnim1);
-
-                const afterAnim2 = document.createElement('img');
-                afterAnim2.className = 'altair-afterimage altair-afterimage-2';
-                afterAnim2.src = secondImgSrc;
-                fxLayer.appendChild(afterAnim2);
-
-                const attackFx = document.createElement('img');
-                attackFx.className = 'altair-charge-img';
-                attackFx.src = 'image/ガチャ/アルタイルエフェクト.png';
-                fxLayer.appendChild(attackFx);
-
-                const pillarFx = document.createElement('div');
-                pillarFx.className = 'altair-fire-pillar';
-                fxLayer.appendChild(pillarFx);
-
-                const startTime = Date.now();
-                characterEffectTimer = setInterval(() => {
-                    const elapsed = (Date.now() - startTime) % 10000;
-                    if (elapsed > 6400 && elapsed < 8500) {
-                        if (!img.src.includes('アルタイル2')) {
-                            img.style.opacity = '0';
-                            img.src = secondImgSrc;
-                            setTimeout(() => img.style.opacity = '1', 50);
-                        }
-                    } else {
-                        if (img.src.includes('アルタイル2')) {
-                            img.style.opacity = '0';
-                            img.src = firstImgSrc;
-                            setTimeout(() => img.style.opacity = '1', 50);
-                        }
-                    }
-                }, 100);
-            } else if (item.rarity === 5) {
-                img.classList.add('char-breathing');
-            }
-
-            // 即座に表示（シルエットなし・フラグセット）
-            screen.classList.add('revealed');
-            screen.classList.add('preview-mode');
-            screen.style.display = 'flex';
-        }
-
-        // --- 7. 結果画面の構築 ---
-
-        function showResultScreen(results) {
-            const resultScreen = document.getElementById('result-screen');
-            const container = document.getElementById('result-cards');
-            const flash = document.getElementById('flash');
-
-            container.innerHTML = ''; // クリア
-
-            results.forEach((item, index) => {
-                // 星の文字列生成 (✦✦✦✦✦)
-                let starsHTML = '';
-                for (let i = 0; i < item.rarity; i++) { starsHTML += '✦'; }
-
-                // カードDOM生成
-                const card = document.createElement('div');
-                card.className = `char-card card-star${item.rarity}`;
-                card.style.animationDelay = `${index * 0.1}s`; // 順番に出現させる
-
-                // サムの場合、結果画面や図鑑では2枚目の画像を表示する
-                let displayImg = item.data.img;
-                if (item.data.name.includes('サム')) {
-                    displayImg = displayImg.replace('」', '2」');
-                }
-
-                // アルタイルの場合、カード背景も表示する
-                let bgHtml = '';
-                if (item.data.name.includes('アルタイル')) {
-                    bgHtml = `<img src="image/ガチャ/アルタイル背景.png" class="char-bg-img" alt="bg">`;
-                }
-
-                card.innerHTML = `
-                    ${item.isNew ? '<div class="new-badge">NEW</div>' : ''}
-                    ${bgHtml}
-                    <img src="${displayImg}" class="char-img" alt="${item.data.name}">
-                    <div class="char-info">
-                        <div class="char-name">${item.data.name}</div>
-                        <div class="stars star${item.rarity}">${starsHTML}</div>
-                    </div>
-                `;
-                // クリック時に詳細表示（全身表示）
-                card.onclick = () => showCharacterDetail(item);
-
-                container.appendChild(card);
-            });
-
-            resultScreen.style.display = 'flex';
-
-            // ホワイトアウト解除
-            setTimeout(() => {
-                flash.classList.remove('active-whiteout');
-            }, 100);
-        }
-
-        // タイトルへ戻る処理
-        function returnToTitle() {
-            clearRevealEffects();
-            const flash = document.getElementById('flash');
-            flash.classList.add('active-whiteout');
-
-            setTimeout(() => {
-                document.getElementById('result-screen').style.display = 'none';
-                document.getElementById('title-screen').style.display = 'block';
-
-                setTimeout(() => {
-                    flash.classList.remove('active-whiteout');
-                }, 100);
-            }, 600);
-        }
-
-        function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
     </script>
 </body>
 
