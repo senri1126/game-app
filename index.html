@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gacha Simulator</title>
+    <title>Game Simulator</title>
     <!-- 明朝体とゴシック体をロード -->
     <link
         href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap"
@@ -18,9 +18,14 @@
     <!-- ================= 画面1: タイトル画面 ================= -->
     <div id="title-screen" class="warp-container">
         <!-- 図鑑へのリンクボタン（右上） -->
-        <a href="archive.html" class="archive-link-btn">
-            <span>📖</span> 図鑑
-        </a>
+        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 100;">
+            <a href="game.html" class="archive-link-btn" style="background: rgba(150, 0, 0, 0.4); border-color: #ff4444; position: static;">
+                <span>⚔️</span> 戦闘
+            </a>
+            <a href="archive.html" class="archive-link-btn" style="position: static;">
+                <span>📖</span> 図鑑
+            </a>
+        </div>
 
         <div class="button-group">
             <!-- 1回引くボタン -->
@@ -46,7 +51,7 @@
         <div class="space-stage" id="star-field"></div>
         <div class="ticket-container">
             <!-- チケット画像 -->
-            <img id="anim-ticket" src="image/チケット.png" class="gacha-ticket" alt="Ticket">
+            <img id="anim-ticket" src="image/ガチャ/チケット.png" class="gacha-ticket" alt="Ticket">
         </div>
         <div id="portal"></div>
     </div>
@@ -84,25 +89,25 @@
         // ※ imgのURLはご自身の画像URLに書き換えてください。
         const CHAR_DB = {
             5: [
-                { name: "【星の狩人】サム", img: "image/「【星の狩人】サム」星5.png" },
-                { name: "【ホワイトホール】ホーリードラゴン", img: "image/「【ホワイトホール】ホーリードラゴン」星5.png" },
-                { name: "【銀河の妖狐】アルタイル", img: "image/「【銀河の妖狐】アルタイル」星5.png" }
+                { name: "【星の狩人】サム", img: "image/ガチャ/「【星の狩人】サム」星5.png" },
+                { name: "【ホワイトホール】ホーリードラゴン", img: "image/ガチャ/「【ホワイトホール】ホーリードラゴン」星5.png" },
+                { name: "【銀河の妖狐】アルタイル", img: "image/ガチャ/「【銀河の妖狐】アルタイル」星5.png" }
             ],
             4: [
-                { name: "ゴールドゴーレム", img: "image/「ゴールドゴーレム」星4.png" },
-                { name: "ソード将軍", img: "image/「ソード将軍」星4.png" },
-                { name: "ドラゴンベビー", img: "image/「ドラゴンベビー」星4.png" },
-                { name: "口裂け女", img: "image/「口裂け女」星4.png" },
-                { name: "聖ユニコーン", img: "image/「聖ユニコーン」星4.png" }
+                { name: "ゴールドゴーレム", img: "image/ガチャ/「ゴールドゴーレム」星4.png" },
+                { name: "ソード将軍", img: "image/ガチャ/「ソード将軍」星4.png" },
+                { name: "ドラゴンベビー", img: "image/ガチャ/「ドラゴンベビー」星4.png" },
+                { name: "口裂け女", img: "image/ガチャ/「口裂け女」星4.png" },
+                { name: "聖ユニコーン", img: "image/ガチャ/「聖ユニコーン」星4.png" }
             ],
             3: [
-                { name: "モブ兵士A", img: "image/「モブ兵士A」星3.png" },
-                { name: "モブ兵士B", img: "image/「モブ兵士B」星3.png" },
-                { name: "ゴブリン", img: "image/「ゴブリン」星3.png" },
-                { name: "セイレーン", img: "image/「セイレーン」星3.png" },
-                { name: "ミノタウロス", img: "image/「ミノタウロス」星3.png" },
-                { name: "河童", img: "image/「河童」星3.png" },
-                { name: "狼男", img: "image/「狼男」星3.png" }
+                { name: "モブ兵士A", img: "image/ガチャ/「モブ兵士A」星3.png" },
+                { name: "モブ兵士B", img: "image/ガチャ/「モブ兵士B」星3.png" },
+                { name: "ゴブリン", img: "image/ガチャ/「ゴブリン」星3.png" },
+                { name: "セイレーン", img: "image/ガチャ/「セイレーン」星3.png" },
+                { name: "ミノタウロス", img: "image/ガチャ/「ミノタウロス」星3.png" },
+                { name: "河童", img: "image/ガチャ/「河童」星3.png" },
+                { name: "狼男", img: "image/ガチャ/「狼男」星3.png" }
             ]
         };
 
@@ -110,16 +115,52 @@
         let tenPullPityCount = 0; // 10連で星5が出なかった回数をカウント
         let isAnimationSkipped = false;
         let activePullResults = [];
-        let samImageTimer = null; // サムの画像切り替え用タイマー
+        let characterEffectTimer = null; // 特定キャラの画像切り替え用タイマー
+        let revealTimeouts = []; // 演出用のタイマー（setTimeout）を管理
+        let currentRevealId = 0; // 現在進行中の演出ID（連打や競合の防止）
 
         // 獲得済みキャラの管理（localStorage版）
-        const OBTAINED_KEY = 'gacha_app_obtained_chars';
+        const OBTAINED_KEY = 'game_app_obtained_chars';
         const obtainedChars = new Set(JSON.parse(localStorage.getItem(OBTAINED_KEY) || '[]'));
 
-        function clearSamTimer() {
-            if (samImageTimer) {
-                clearInterval(samImageTimer);
-                samImageTimer = null;
+        function clearRevealEffects() {
+            // インターバルタイマーのクリア
+            if (characterEffectTimer) {
+                clearInterval(characterEffectTimer);
+                characterEffectTimer = null;
+            }
+            // 全ての待機中タイムアウトをクリア
+            revealTimeouts.forEach(t => clearTimeout(t));
+            revealTimeouts = [];
+
+            // 演出用レイヤーのクリア
+            const fxLayer = document.getElementById('reveal-fx');
+            if (fxLayer) {
+                fxLayer.className = '';
+                fxLayer.innerHTML = '';
+            }
+
+            // 画像のリセット
+            const emptyImg = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            const img = document.getElementById('reveal-img');
+            if (img) {
+                img.onload = null;
+                img.src = emptyImg;
+                img.style.filter = '';
+                img.style.opacity = '0';
+            }
+            const bgImg = document.getElementById('reveal-bg-img');
+            if (bgImg) {
+                bgImg.onload = null;
+                bgImg.src = emptyImg;
+                bgImg.style.filter = '';
+                bgImg.style.display = 'none';
+            }
+
+            // 画面状態のリセット
+            const screen = document.getElementById('reveal-screen');
+            if (screen) {
+                screen.classList.remove('revealed', 'preview-mode');
             }
         }
 
@@ -331,12 +372,7 @@
         let revealQueue = [];
         let currentRevealIndex = 0;
 
-        function clearSamTimer() {
-            if (samImageTimer) {
-                clearInterval(samImageTimer);
-                samImageTimer = null;
-            }
-        }
+        // 前の関数の重複定義を削除
 
         async function startRevealSequence(results) {
             pendingResults = results;
@@ -352,6 +388,7 @@
         }
 
         function showNextReveal() {
+            const revealId = ++currentRevealId;
             const item = revealQueue[currentRevealIndex];
             const screen = document.getElementById('reveal-screen');
             const img = document.getElementById('reveal-img');
@@ -360,28 +397,21 @@
             const starsEl = document.getElementById('reveal-stars');
             const flash = document.getElementById('flash');
 
-            // === 1. まず画面を完全にリセット ===
+            // === 1. 状態と演出の完全リセット ===
+            clearRevealEffects();
             screen.classList.remove('revealed');
             screen.style.display = 'none';
             flash.classList.remove('active-whiteout');
 
-            // 演出クラスを全て外す（シルエット中は何も動かさない）
+            // 演出クラスを全て外す
             img.classList.remove('char-breathing', 'char-altair-breathing', 'char-sam-breathing', 'char-dragon-breathing');
             img.style.opacity = '0';
             img.style.filter = 'brightness(0)';
             img.classList.remove('silhouette-transition');
 
-            // 背景画像のリセット
-            bgImg.src = '';
-            bgImg.style.display = 'none';
+            // 背景画像のリセット（clearRevealEffectsで既に行われているが、念のため透明度とフィルタを初期化）
             bgImg.style.filter = 'brightness(0)';
             bgImg.classList.remove('silhouette-transition');
-
-            // FXレイヤーのクリア
-            const fxLayer = document.getElementById('reveal-fx');
-            fxLayer.className = '';
-            fxLayer.innerHTML = '';
-            clearSamTimer();
 
             // 名前のパース（【二つ名】名前 の形式なら分ける）
             const fullName = item.data.name;
@@ -399,12 +429,20 @@
 
             // アルタイルは背景画像を先にセット（シルエットとして表示するため）
             if (item.data.name.includes('アルタイル')) {
-                bgImg.src = 'image/アルタイル背景.png';
+                bgImg.src = 'image/ガチャ/アルタイル背景.png';
                 bgImg.style.display = 'block';
             }
 
             // === 2. 画像を読み込み、シルエットとして画面に表示 ===
             img.onload = () => {
+                // リセット時や古いリクエストのonloadは無視
+                if (revealId !== currentRevealId) return;
+                if (img.src.startsWith('data:image/gif')) return;
+
+                // 表示中のキャラの画像（1枚目または2枚目）であることを確認
+                const expectedImg = item.data.img.split('/').pop().replace(/」$/, '');
+                if (!img.src.includes(encodeURI(expectedImg))) return;
+
                 // 演出途中での切り替え（サム2等）の時は、透明度を戻すだけ
                 if (img.src.includes('2.png') || img.src.includes('アルタイル2')) {
                     img.style.opacity = '1';
@@ -417,7 +455,7 @@
                 screen.style.display = 'flex';
 
                 // === 3. 1秒後にシルエット解除（明転） ===
-                setTimeout(() => {
+                const t1 = setTimeout(() => {
                     img.classList.add('silhouette-transition');
                     bgImg.classList.add('silhouette-transition');
                     // トランジションを付けてからfilterを変える→滑らかに明転
@@ -427,16 +465,17 @@
                         screen.classList.add('revealed');
                     });
                 }, 1000);
+                revealTimeouts.push(t1);
 
                 // === 4. 明転完了後（+1s）に演出を開始 ===
-                setTimeout(() => {
-                    // トランジションを外す（呼吸アニメの邪魔をしない）
+                const t2 = setTimeout(() => {
+                    // トランジションクラスのみ外す（呼吸アニメの邪魔をしない）
                     img.classList.remove('silhouette-transition');
                     bgImg.classList.remove('silhouette-transition');
-                    img.style.filter = '';
-                    bgImg.style.filter = '';
+                    // filterはbrightness(1)を維持
 
                     // キャラごとの演出クラスを付与
+                    const fxLayer = document.getElementById('reveal-fx');
                     if (item.data.name.includes('サム')) {
                         img.classList.add('char-sam-breathing');
                         fxLayer.classList.add('sam-fx');
@@ -447,7 +486,7 @@
                         preload.src = secondImgSrc;
 
                         const startTime = Date.now();
-                        samImageTimer = setInterval(() => {
+                        characterEffectTimer = setInterval(() => {
                             const elapsed = (Date.now() - startTime) % 8000;
                             if (elapsed > 5200 && elapsed < 7800) {
                                 if (!img.src.includes('2.png')) {
@@ -472,7 +511,7 @@
                         for (let i = 0; i < 20; i++) {
                             const meteor = document.createElement('img');
                             meteor.className = 'dragon-meteor';
-                            meteor.src = i % 2 === 0 ? 'image/隕石.png' : 'image/隕石2.png';
+                            meteor.src = i % 2 === 0 ? 'image/ガチャ/隕石.png' : 'image/ガチャ/隕石2.png';
                             meteor.style.left = `${Math.random() * 120 - 10}%`;
                             meteor.style.animationDelay = `${Math.random() * 1.5}s`;
                             meteor.style.setProperty('--meteor-scale', 0.5 + Math.random() * 1.5);
@@ -483,7 +522,7 @@
                         fxLayer.classList.add('altair-fx');
 
                         const firstImgSrc = item.data.img;
-                        const secondImgSrc = 'image/「【銀河の妖狐】アルタイル2」.png';
+                        const secondImgSrc = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
                         const preload = new Image();
                         preload.src = secondImgSrc;
 
@@ -499,7 +538,7 @@
 
                         const attackFx = document.createElement('img');
                         attackFx.className = 'altair-charge-img';
-                        attackFx.src = 'image/アルタイルエフェクト.png';
+                        attackFx.src = 'image/ガチャ/アルタイルエフェクト.png';
                         fxLayer.appendChild(attackFx);
 
                         const pillarFx = document.createElement('div');
@@ -507,14 +546,16 @@
                         fxLayer.appendChild(pillarFx);
 
                         const startTime = Date.now();
-                        samImageTimer = setInterval(() => {
+                        characterEffectTimer = setInterval(() => {
                             const elapsed = (Date.now() - startTime) % 10000;
                             if (elapsed > 6400 && elapsed < 8500) {
                                 if (!img.src.includes('アルタイル2')) {
+                                    img.style.opacity = '0';
                                     img.src = secondImgSrc;
                                 }
                             } else {
                                 if (img.src.includes('アルタイル2')) {
+                                    img.style.opacity = '0';
                                     img.src = firstImgSrc;
                                 }
                             }
@@ -523,6 +564,7 @@
                         img.classList.add('char-breathing');
                     }
                 }, 2200); // 1秒wait + 1.2秒transition
+                revealTimeouts.push(t2);
             };
 
             img.src = item.data.img;
@@ -534,6 +576,7 @@
 
             // プレビューモード（リザルトからの個別表示）の場合は閉じるだけ
             if (screen.classList.contains('preview-mode')) {
+                clearRevealEffects();
                 screen.style.display = 'none';
                 screen.classList.remove('preview-mode');
                 return;
@@ -545,6 +588,7 @@
                 showNextReveal();
             } else {
                 // 全員表示し終えたらリザルト画面へ
+                clearRevealEffects();
                 screen.style.display = 'none';
                 showResultScreen(pendingResults);
             }
@@ -552,6 +596,8 @@
 
         // リザルト画面から個別に詳細を表示する関数
         function showCharacterDetail(item) {
+            clearRevealEffects();
+
             const screen = document.getElementById('reveal-screen');
             const img = document.getElementById('reveal-img');
             const bgImg = document.getElementById('reveal-bg-img');
@@ -560,14 +606,18 @@
 
             img.style.opacity = '1';
             img.style.filter = ''; // シルエット状態をリセット
+            img.onload = () => {
+                if (revealId !== currentRevealId) return;
+                const expectedImg = item.data.img.split('/').pop().replace(/」$/, '');
+                if (!img.src.includes(encodeURI(expectedImg))) return;
+                
+                img.style.opacity = '1';
+                img.style.filter = 'brightness(1)';
+            };
             img.src = item.data.img;
             
-            // 背景画像のリセット
-            bgImg.src = '';
-            bgImg.style.display = 'none';
-            bgImg.style.filter = '';
-
-            clearSamTimer();
+            // 背景画像のリセット（clearRevealEffectsで既に行われている）
+            // 特定キャラのみ後続のロジックで再表示される
 
             // 名前のパース
             const fullName = item.data.name;
@@ -599,7 +649,7 @@
                 preload.src = secondImgSrc;
 
                 const startTime = Date.now();
-                samImageTimer = setInterval(() => {
+                characterEffectTimer = setInterval(() => {
                     const elapsed = (Date.now() - startTime) % 8000;
                     if (elapsed > 5200 && elapsed < 7800) {
                         if (!img.src.includes('2.png')) {
@@ -624,7 +674,7 @@
                 for (let i = 0; i < 20; i++) {
                     const meteor = document.createElement('img');
                     meteor.className = 'dragon-meteor';
-                    meteor.src = i % 2 === 0 ? 'image/隕石.png' : 'image/隕石2.png';
+                    meteor.src = i % 2 === 0 ? 'image/ガチャ/隕石.png' : 'image/ガチャ/隕石2.png';
                     meteor.style.left = `${Math.random() * 120 - 10}%`;
                     meteor.style.animationDelay = `${Math.random() * 1.5}s`;
                     meteor.style.setProperty('--meteor-scale', 0.5 + Math.random() * 1.5);
@@ -633,11 +683,11 @@
             } else if (item.data.name.includes('アルタイル')) {
                 img.classList.add('char-altair-breathing');
                 fxLayer.classList.add('altair-fx');
-                bgImg.src = 'image/アルタイル背景.png';
+                bgImg.src = 'image/ガチャ/アルタイル背景.png';
                 bgImg.style.display = 'block';
 
                 const firstImgSrc = item.data.img;
-                const secondImgSrc = 'image/「【銀河の妖狐】アルタイル2」.png';
+                const secondImgSrc = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
                 const preload = new Image();
                 preload.src = secondImgSrc;
 
@@ -653,7 +703,7 @@
 
                 const attackFx = document.createElement('img');
                 attackFx.className = 'altair-charge-img';
-                attackFx.src = 'image/アルタイルエフェクト.png';
+                attackFx.src = 'image/ガチャ/アルタイルエフェクト.png';
                 fxLayer.appendChild(attackFx);
 
                 const pillarFx = document.createElement('div');
@@ -661,15 +711,19 @@
                 fxLayer.appendChild(pillarFx);
 
                 const startTime = Date.now();
-                samImageTimer = setInterval(() => {
+                characterEffectTimer = setInterval(() => {
                     const elapsed = (Date.now() - startTime) % 10000;
                     if (elapsed > 6400 && elapsed < 8500) {
                         if (!img.src.includes('アルタイル2')) {
+                            img.style.opacity = '0';
                             img.src = secondImgSrc;
+                            setTimeout(() => img.style.opacity = '1', 50);
                         }
                     } else {
                         if (img.src.includes('アルタイル2')) {
+                            img.style.opacity = '0';
                             img.src = firstImgSrc;
+                            setTimeout(() => img.style.opacity = '1', 50);
                         }
                     }
                 }, 100);
@@ -711,7 +765,7 @@
                 // アルタイルの場合、カード背景も表示する
                 let bgHtml = '';
                 if (item.data.name.includes('アルタイル')) {
-                    bgHtml = `<img src="image/アルタイル背景.png" class="char-bg-img" alt="bg">`;
+                    bgHtml = `<img src="image/ガチャ/アルタイル背景.png" class="char-bg-img" alt="bg">`;
                 }
 
                 card.innerHTML = `
@@ -739,6 +793,7 @@
 
         // タイトルへ戻る処理
         function returnToTitle() {
+            clearRevealEffects();
             const flash = document.getElementById('flash');
             flash.classList.add('active-whiteout');
 
