@@ -14,6 +14,7 @@
 <body>
     <div class="bg-layer"></div>
     <div class="particles" id="particles"></div>
+    <div id="battle-fx-layer"></div>
     <div class="damage-flash" id="damage-flash"></div>
 
     <!-- 行動順表示 -->
@@ -176,28 +177,47 @@
         }
 
         function loadStage() {
-            isProcessing = false; // フラグをリセットして確実にターンを回す
-            const stageData = STAGES[currentStage];
-            if (!stageData) return;
-            enemyParty = stageData.enemies.map((type, index) => {
-                const base = ENEMY_TYPES[type];
-                return {
-                    ...base,
-                    id: `e${index}`,
-                    side: 'enemy',
-                    maxHp: base.hp,
-                    sp: 0,
-                    isEvading: false
-                };
-            });
-            
-            document.getElementById('stage-info').textContent = `STAGE ${currentStage + 1} / ${STAGES.length}`;
-            renderParty('enemy');
-            currentTarget = enemyParty[0]; // 初期ターゲット
-            updateTargetUI();
-            addLog(`STAGE ${currentStage + 1}: 敵が現れた！`);
-            
-            startTurnCycle();
+            try {
+                isProcessing = true; // 読み込み中は操作禁止
+                const stageData = STAGES[currentStage];
+                if (!stageData) {
+                    addLog("全ステージクリア！");
+                    checkWinLoss(); // 勝利画面へ
+                    return;
+                }
+
+                enemyParty = stageData.enemies.map((type, index) => {
+                    const base = ENEMY_TYPES[type];
+                    return {
+                        ...base,
+                        id: `e${Date.now()}_${index}`, // IDを確実にユニークにする
+                        side: 'enemy',
+                        maxHp: base.hp,
+                        hp: base.hp,
+                        sp: 0,
+                        isEvading: false,
+                        statusEffects: []
+                    };
+                });
+                
+                document.getElementById('stage-info').textContent = `STAGE ${currentStage + 1} / ${STAGES.length}`;
+                renderParty('enemy');
+                
+                // ターゲットを初期化（新しいステージの最初の敵を狙う）
+                currentTarget = enemyParty.find(e => e.hp > 0) || null;
+                updateTargetUI();
+                
+                addLog(`<span style="color:#ffff00; font-weight:bold;">STAGE ${currentStage + 1}: 敵が現れた！</span>`);
+                
+                // 確実に画面を更新してからフラグを解除
+                setTimeout(() => {
+                    isProcessing = false;
+                    startTurnCycle();
+                }, 500);
+            } catch (e) {
+                console.error("LoadStage Error:", e);
+                isProcessing = false;
+            }
         }
 
         function createParticles() {
@@ -232,8 +252,12 @@
                     avatarContent = `<img src="${char.img}" style="width:100%; height:100%; object-fit:contain;">`;
                 }
 
+                let avatarClass = `char-avatar ${side}-avatar`;
+                if (char.name.includes('アルタイル')) avatarClass += ' avatar-altair';
+                if (char.name.includes('サム')) avatarClass += ' avatar-sam';
+
                 card.innerHTML = `
-                    <div class="char-avatar ${side}-avatar" id="avatar-${char.id}">${avatarContent}</div>
+                    <div class="${avatarClass}" id="avatar-${char.id}">${avatarContent}</div>
                     <div class="char-name-label">${char.name}</div>
                     <div class="status-container">
                         <div class="hp-bar-container">
@@ -339,8 +363,16 @@
         // --- アクション ---
         async function executeCommand(type) {
             if (isProcessing || !activeChar || activeChar.side !== 'player') return;
+            
+            // 必殺技のSP不足チェックを厳格化
+            if (type === 'special' && activeChar.sp < 100) {
+                addLog(`<span style="color:#ff8888;">SPが足りません！</span>`);
+                return;
+            }
+
             isProcessing = true;
             disableCommands(true);
+            try {
 
             let logMsg = "";
             let damage = 0;
@@ -359,15 +391,58 @@
             }
             else if (type === 'special') {
                 const name = activeChar.name;
+                const charImgEl = document.querySelector(`#card-${activeChar.id} .char-avatar img`);
+                const fxLayer = document.getElementById('battle-fx-layer');
+                
+                // --- 中央カットイン演出 ---
+                const cutinOverlay = document.createElement('div');
+                cutinOverlay.className = 'ultimate-cutin-overlay';
+                const cutinImg = document.createElement('img');
+                cutinImg.className = 'ultimate-cutin-img';
+                
+                // 真の姿の画像パスを gacha.html およびユーザー指定と完全に一致させる
+                let specialImg = activeChar.img || "";
                 if (name.includes('サム')) {
+                    specialImg = 'image/ガチャ/「【星の狩人】サム2」星5.png';
+                } else if (name.includes('アルタイル')) {
+                    specialImg = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
+                } else if (name.includes('ドラゴン')) {
+                    // ドラゴンは2枚目がないためそのまま
+                    specialImg = activeChar.img || "";
+                }
+                cutinImg.src = specialImg;
+                
+                const flash = document.createElement('div');
+                flash.className = 'ultimate-bg-flash';
+                
+                cutinOverlay.appendChild(flash);
+                cutinOverlay.appendChild(cutinImg);
+                document.body.appendChild(cutinOverlay);
+                
+                setTimeout(() => cutinOverlay.remove(), 2000);
+                await wait(1200);
+
+                fxLayer.innerHTML = ''; 
+                if (name.includes('サム')) {
+                    fxLayer.className = 'sam-fx-active';
                     logMsg = `究極奥義！【神域の矢】！ ${activeChar.name}が敵を殲滅する！`;
                     addLog(logMsg);
                     enemyParty.filter(e => e.hp > 0).forEach(e => {
-                        const dmg = e.maxHp; 
-                        applyDamage(e, dmg);
-                        showDamageEffect(e.id, dmg, true);
+                        applyDamage(e, e.maxHp);
+                        showDamageEffect(e.id, e.maxHp, true);
                     });
                 } else if (name.includes('ドラゴン')) {
+                    fxLayer.className = 'dragon-fx';
+                    const shockwave = document.createElement('div');
+                    shockwave.className = 'dragon-shockwave';
+                    fxLayer.appendChild(shockwave);
+                    for (let i = 0; i < 15; i++) {
+                        const meteor = document.createElement('div');
+                        meteor.className = 'dragon-meteor';
+                        meteor.innerHTML = `<img src="image/ガチャ/隕石${i % 2 === 0 ? '' : '2'}.png" style="width:100%;">`;
+                        meteor.style.left = `${Math.random() * 100}%`;
+                        fxLayer.appendChild(meteor);
+                    }
                     logMsg = `究極奥義！【聖竜の息吹】！ 敵全体を光が包む！`;
                     addLog(logMsg);
                     enemyParty.filter(e => e.hp > 0).forEach(e => {
@@ -376,13 +451,16 @@
                         showDamageEffect(e.id, dmg, true);
                     });
                 } else if (name.includes('アルタイル')) {
+                    fxLayer.className = 'altair-fx';
+                    const pillar = document.createElement('div');
+                    pillar.className = 'altair-fire-pillar';
+                    fxLayer.appendChild(pillar);
                     logMsg = `究極奥義！【恒星の獄炎】！ 敵全体を永劫の炎が焼き尽くす！`;
                     addLog(logMsg);
                     enemyParty.filter(e => e.hp > 0).forEach(e => {
                         if (!e.statusEffects) e.statusEffects = [];
                         if (!e.statusEffects.includes('burn')) e.statusEffects.push('burn');
-                        addLog(`${e.name}は「やけど」状態になった！`);
-                        const dmg = Math.floor(activeChar.atk * 0.5); // 発動時にも少しダメージ
+                        const dmg = Math.floor(activeChar.atk * 0.5); 
                         applyDamage(e, dmg);
                         showDamageEffect(e.id, dmg, true);
                     });
@@ -392,7 +470,12 @@
                     applyDamage(currentTarget, damage);
                     showDamageEffect(currentTarget.id, damage, true);
                 }
+                
+                await wait(800);
+                fxLayer.innerHTML = '';
+                fxLayer.className = '';
                 activeChar.sp = 0;
+                logMsg = ""; 
             }
             else if (type.startsWith('item')) {
                 const itemType = type === 'item-hp' ? 'hp' : 'sp';
@@ -416,10 +499,17 @@
                 updateItemDisplay();
             }
 
-            addLog(logMsg);
+            if (logMsg) addLog(logMsg);
             updateStatusAll();
-            await wait(1000);
 
+            // 敵全滅チェック：即座に次へ
+            if (enemyParty.every(e => e.hp <= 0)) {
+                isProcessing = true;
+                checkWinLoss();
+                return; 
+            }
+
+            await wait(600);
             if (checkWinLoss()) return;
 
             // 追加行動判定
@@ -431,9 +521,13 @@
                 return;
             }
             activeChar.isExtraTurn = false;
-
             nextTurn();
+        } catch (err) {
+            console.error("Command Error:", err);
+            isProcessing = false;
+            disableCommands(false);
         }
+    }
 
         async function enemyAction(enemy) {
             // ランダムな味方を狙う
@@ -480,9 +574,24 @@
 
         function applyDamage(target, dmg) {
             target.hp = Math.max(0, target.hp - dmg);
+            
+            // 即座にHPバーへ反映
+            updateStatusAll();
+
             if (target.hp <= 0) {
-                document.getElementById(`card-${target.id}`).classList.add('defeated');
-                addLog(`${target.name}を倒した！`);
+                const el = document.getElementById(`card-${target.id}`);
+                if (el) {
+                    el.classList.add('defeated');
+                    el.style.opacity = '0'; // 即座に消滅
+                    el.style.pointerEvents = 'none';
+                }
+                addLog(`${target.name}を撃破！`);
+                
+                // ターゲットが倒れた場合、自動で次を探す
+                if (currentTarget === target) {
+                    currentTarget = enemyParty.find(e => e.hp > 0) || null;
+                    updateTargetUI();
+                }
             }
         }
 
