@@ -308,9 +308,12 @@
                         <div class="hp-bar-container-mini">
                             <div class="hp-bar-fill-mini ${side}-hp" id="hp-bar-${char.id}" style="width:${(char.hp / char.maxHp) * 100}%"></div>
                         </div>
+                        <div class="status-text-mini" id="hp-text-${char.id}">${char.hp} / ${char.maxHp}</div>
+                        
                         <div class="sp-bar-container-mini">
                             <div class="sp-bar-fill-mini ${side}-sp" id="sp-bar-${char.id}" style="width:${char.sp}%"></div>
                         </div>
+                        <div class="status-text-mini sp" id="sp-text-${char.id}">${char.sp}%</div>
                     </div>
                 `;
 
@@ -442,7 +445,8 @@
 
             if (name.includes('アルタイル')) {
                 // アルタイル攻撃.png が敵に飛んでいき敵が炎に包まれる
-                await shootProjectile('image/クエスト/アルタイル攻撃.png', attackerRect, targetRect);
+                // 手の位置から出すため、少し上(centerY - 80px)から発射
+                await shootProjectile('image/クエスト/アルタイル攻撃.png', attackerRect, targetRect, -80);
                 targetEl.classList.add('fire-hit');
                 setTimeout(() => targetEl.classList.remove('fire-hit'), 800);
                 await wait(400);
@@ -474,12 +478,12 @@
             }
         }
 
-        async function shootProjectile(src, fromRect, toRect) {
+        async function shootProjectile(src, fromRect, toRect, offsetY = 0) {
             const img = document.createElement('img');
             img.src = src;
             img.className = 'projectile';
             img.style.left = `${fromRect.left + fromRect.width / 2}px`;
-            img.style.top = `${fromRect.top + fromRect.height / 2}px`;
+            img.style.top = `${fromRect.top + fromRect.height / 2 + offsetY}px`;
             document.body.appendChild(img);
 
             await wait(50);
@@ -753,7 +757,7 @@
             if (enemyParty.every(e => e.hp <= 0)) {
                 currentStage++;
                 if (currentStage >= STAGES.length) {
-                    showOverlay('VICTORY', '帝王を倒し、銀河に平和が訪れた！', 'タイトルへ戻る', 'victory');
+                    showOverlay('Congratulations🎉🎉🎉', '帝王を倒し、銀河に平和が訪れた！', 'タイトルへ戻る', 'victory');
                 } else {
                     addLog(`敵を全滅させた！ 次の戦いへ...`);
                     setTimeout(loadStage, 1500);
@@ -819,7 +823,7 @@
 
         function overlayAction() {
             const btnText = document.getElementById('overlay-btn').textContent;
-            if (btnText === 'タイトルへ') {
+            if (btnText.includes('タイトルへ')) {
                 location.href = 'index.html';
                 return;
             }
