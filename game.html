@@ -21,6 +21,7 @@
     <div class="turn-order-container" id="turn-order"></div>
 
     <a href="index.html" class="nav-back">← タイトルに戻る</a>
+    <button class="log-btn" onclick="toggleLog()">📜 LOG</button>
 
     <div class="game-header">
         <div class="game-title">⚔ CHARACTER BATTLE ⚔</div>
@@ -28,6 +29,14 @@
     </div>
 
     <div class="battle-area">
+        <!-- 画面上部のボス専用HPバー -->
+        <div id="boss-hp-container" class="boss-hp-fixed-container" style="display:none; top: 110px;">
+            <div class="boss-name-top" id="boss-name-top">Cosmic King</div>
+            <div class="boss-hp-bar-bg">
+                <div id="boss-hp-bar-fill" class="boss-hp-bar-fill"></div>
+            </div>
+            <div class="boss-hp-text-top" id="boss-hp-text-top">0 / 0</div>
+        </div>
         <!-- プレイヤー陣営 (左側) -->
         <div class="side-container player-side-container" id="player-party-container">
             <!-- JSでカードが生成されます -->
@@ -68,7 +77,13 @@
                 <span class="item-count" id="item-sp-count">3</span>
             </button>
         </div>
-        <div class="battle-log" id="battle-log"></div>
+    </div>
+
+    <!-- ログ表示エリア (独立) -->
+    <div class="battle-log-overlay" id="battle-log-overlay" onclick="toggleLog()">
+        <div class="battle-log-content" id="battle-log" onclick="event.stopPropagation()">
+            <!-- JSでログが追加されます -->
+        </div>
     </div>
 
     <!-- オーバーレイ -->
@@ -89,13 +104,14 @@
         const ENEMY_TYPES = {
             weak: { name: 'Goblin', emoji: '💧', hp: 60, atk: 8, def: 2, speed: 2, desc: 'Goblin' },
             mid: { name: 'Golden Golem', emoji: '💂', hp: 500, atk: 60, def: 45, speed: 10, desc: 'Golden Golem' },
-            boss: { name: 'Cosmic King', emoji: '🌎', hp: 1800, atk: 150, def: 60, speed: 30, desc: 'Cosmic King' }
+            boss: { name: 'Cosmic King', emoji: '🌎', hp: 1800, atk: 150, def: 60, speed: 30, desc: 'Cosmic King' },
+            mid2: { name: 'ソード将軍', emoji: '⚔️', hp: 400, atk: 50, def: 30, speed: 15, desc: 'ソード将軍' }
         };
 
         const STAGES = [
             { enemies: ['weak'] },
-            { enemies: ['mid', 'mid'] },
-            { enemies: ['boss', 'mid', 'mid'] }
+            { enemies: ['mid'] },
+            { enemies: ['boss', 'mid2', 'mid2'] }
         ];
 
         // === ゲーム状態 ===
@@ -180,6 +196,15 @@
             try {
                 isProcessing = true; // 読み込み中は操作禁止
                 const stageData = STAGES[currentStage];
+
+                // 最終ステージ（ボス戦）判定
+                const enemyContainer = document.getElementById('enemy-party-container');
+                if (currentStage === STAGES.length - 1) {
+                    enemyContainer.classList.add('boss-layout');
+                } else {
+                    enemyContainer.classList.remove('boss-layout');
+                }
+
                 if (!stageData) {
                     addLog("全ステージクリア！");
                     checkWinLoss(); // 勝利画面へ
@@ -241,14 +266,34 @@
             container.innerHTML = '';
             const party = side === 'player' ? playerParty : enemyParty;
 
-            party.forEach(char => {
+            party.forEach((char, index) => {
                 const card = document.createElement('div');
                 card.id = `card-${char.id}`;
                 card.className = `char-card ${side}-side`;
+
+                // 立ち絵表示判定
+                const isTachie = (side === 'enemy' || char.rarity === 5);
+                if (isTachie) card.classList.add('tachie-mode');
+
+                // 特殊配置・サイズ設定
+                if (char.name === 'Cosmic King') {
+                    card.classList.add('boss-large');
+                    card.style.zIndex = "1";
+                }
+                if (char.name === 'ソード将軍') {
+                    card.classList.add('enemy-small');
+                    card.style.zIndex = "10"; // 手前に表示
+                }
+
                 if (char.hp <= 0) card.classList.add('defeated');
 
                 let avatarContent = char.icon || '❓';
-                if (char.img) {
+                if (isTachie) {
+                    const simpleName = char.name.replace(/【.+?】/, '').trim();
+                    let fileName = simpleName;
+                    if (char.name.includes('ドラゴン')) fileName = 'ホーリードラゴン';
+                    avatarContent = `<img src="image/クエスト/${fileName}立ち絵.png" style="width:100%; height:100%; object-fit:contain;">`;
+                } else if (char.img) {
                     avatarContent = `<img src="${char.img}" style="width:100%; height:100%; object-fit:contain;">`;
                 }
 
@@ -258,15 +303,13 @@
 
                 card.innerHTML = `
                     <div class="${avatarClass}" id="avatar-${char.id}">${avatarContent}</div>
-                    <div class="char-name-label">${char.name}</div>
-                    <div class="status-container">
-                        <div class="hp-bar-container">
-                            <div class="hp-label"><span>HP</span><span id="hp-text-${char.id}">${char.hp} / ${char.maxHp}</span></div>
-                            <div class="hp-bar-bg"><div class="hp-bar-fill ${side}-hp" id="hp-bar-${char.id}" style="width:${(char.hp / char.maxHp) * 100}%"></div></div>
+                    <div class="status-minimal">
+                        <div class="char-name-small">${char.name}</div>
+                        <div class="hp-bar-container-mini">
+                            <div class="hp-bar-fill-mini ${side}-hp" id="hp-bar-${char.id}" style="width:${(char.hp / char.maxHp) * 100}%"></div>
                         </div>
-                        <div class="sp-bar-container">
-                            <div class="sp-label"><span>${side === 'player' ? 'SP' : 'ULT'}</span><span id="sp-text-${char.id}">${char.sp}%</span></div>
-                            <div class="sp-bar-bg"><div class="sp-bar-fill ${side}-sp" id="sp-bar-${char.id}" style="width:${char.sp}%"></div></div>
+                        <div class="sp-bar-container-mini">
+                            <div class="sp-bar-fill-mini ${side}-sp" id="sp-bar-${char.id}" style="width:${char.sp}%"></div>
                         </div>
                     </div>
                 `;
@@ -280,6 +323,33 @@
 
                 container.appendChild(card);
             });
+        }
+
+        function updateStatusAll() {
+            [...playerParty, ...enemyParty].forEach(char => {
+                const hpBar = document.getElementById(`hp-bar-${char.id}`);
+                const spBar = document.getElementById(`sp-bar-${char.id}`);
+                if (hpBar) hpBar.style.width = `${(char.hp / char.maxHp) * 100}%`;
+                if (spBar) spBar.style.width = `${char.sp}%`;
+
+                const card = document.getElementById(`card-${char.id}`);
+                if (char.hp <= 0 && card) {
+                    card.classList.add('defeated');
+                    card.style.opacity = '0';
+                    card.style.pointerEvents = 'none';
+                }
+            });
+
+            // ボスHPバーの更新
+            const boss = enemyParty.find(e => e.name === 'Cosmic King');
+            const bossContainer = document.getElementById('boss-hp-container');
+            if (boss && boss.hp > 0) {
+                bossContainer.style.display = 'block';
+                document.getElementById('boss-hp-bar-fill').style.width = `${(boss.hp / boss.maxHp) * 100}%`;
+                document.getElementById('boss-hp-text-top').textContent = `${boss.hp} / ${boss.maxHp}`;
+            } else {
+                bossContainer.style.display = 'none';
+            }
         }
 
         function updateTargetUI() {
@@ -361,6 +431,74 @@
         }
 
         // --- アクション ---
+        async function performAttackAnimation(attacker, target) {
+            const attackerEl = document.getElementById(`card-${attacker.id}`);
+            const targetEl = document.getElementById(`card-${target.id}`);
+            if (!attackerEl || !targetEl) return;
+
+            const name = attacker.name;
+            const attackerRect = attackerEl.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+
+            if (name.includes('アルタイル')) {
+                // アルタイル攻撃.png が敵に飛んでいき敵が炎に包まれる
+                await shootProjectile('image/クエスト/アルタイル攻撃.png', attackerRect, targetRect);
+                targetEl.classList.add('fire-hit');
+                setTimeout(() => targetEl.classList.remove('fire-hit'), 800);
+                await wait(400);
+            }
+            else if (name.includes('サム')) {
+                attackerEl.classList.add('acting-priority');
+                // サムが敵へ飛んでいきぶつかった瞬間に「サム攻撃.png」が発生
+                const deltaX = targetRect.left - attackerRect.left;
+                const deltaY = targetRect.top - attackerRect.top;
+                attackerEl.classList.add('dash-anim');
+                attackerEl.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                await wait(300);
+                showImpactEffect(targetEl, 'image/クエスト/サム攻撃.png');
+                attackerEl.style.transform = '';
+                await wait(200);
+                attackerEl.classList.remove('dash-anim');
+                attackerEl.classList.remove('acting-priority');
+            }
+            else if (name.includes('ドラゴン')) {
+                // 「ホーリードラゴン攻撃.png」を敵に飛ばす
+                await shootProjectile('image/クエスト/ホーリードラゴン攻撃.png', attackerRect, targetRect);
+            }
+            else {
+                // 通常攻撃
+                attackerEl.style.transform = attacker.side === 'player' ? 'translateX(30px)' : 'translateX(-30px)';
+                await wait(150);
+                attackerEl.style.transform = '';
+                await wait(100);
+            }
+        }
+
+        async function shootProjectile(src, fromRect, toRect) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'projectile';
+            img.style.left = `${fromRect.left + fromRect.width / 2}px`;
+            img.style.top = `${fromRect.top + fromRect.height / 2}px`;
+            document.body.appendChild(img);
+
+            await wait(50);
+            img.style.left = `${toRect.left + toRect.width / 2}px`;
+            img.style.top = `${toRect.top + toRect.height / 2}px`;
+            img.style.transform = 'translate(-50%, -50%) scale(1.5) rotate(720deg)';
+
+            await wait(500);
+            img.remove();
+        }
+
+        function showImpactEffect(parentEl, src) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'impact-effect';
+            parentEl.appendChild(img);
+            setTimeout(() => img.remove(), 600);
+        }
+
         async function executeCommand(type) {
             if (isProcessing || !activeChar || activeChar.side !== 'player') return;
 
@@ -378,6 +516,9 @@
                 let damage = 0;
 
                 if (type === 'attack') {
+                    // アニメーション再生
+                    await performAttackAnimation(activeChar, currentTarget);
+
                     damage = calculateDamage(activeChar.atk, activeChar.crit, currentTarget.def);
                     logMsg = `${activeChar.name}の攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
                     applyDamage(currentTarget, damage);
@@ -685,11 +826,18 @@
             location.reload(); // リトライなどの場合はリロード
         }
 
+        function toggleLog() {
+            const overlay = document.getElementById('battle-log-overlay');
+            overlay.classList.toggle('show');
+        }
+
         function addLog(msg) {
             const log = document.getElementById('battle-log');
+            if (!log) return;
             const entry = document.createElement('div');
             entry.innerHTML = msg;
             log.appendChild(entry);
+            // ログが追加されたら自動スクロール
             log.scrollTop = log.scrollHeight;
         }
 
