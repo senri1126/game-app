@@ -81,15 +81,15 @@
     <script>
         // === 設定・DB ===
         const CHAR_STATS = {
-            5: { hp: 600,  atk: 120, speed: 45, def: 40, crit: 0.20, color: '#ffcc00' }, 
-            4: { hp: 100,  atk: 15,  speed: 15, def: 15, crit: 0.05, color: '#c724b1' }, 
-            3: { hp: 50,   atk: 5,   speed: 5,  def: 5,  crit: 0.02, color: '#00a8ff' }  
+            5: { hp: 600, atk: 120, speed: 45, def: 40, crit: 0.20, color: '#ffcc00' },
+            4: { hp: 100, atk: 15, speed: 15, def: 15, crit: 0.05, color: '#c724b1' },
+            3: { hp: 50, atk: 5, speed: 5, def: 5, crit: 0.02, color: '#00a8ff' }
         };
 
         const ENEMY_TYPES = {
-            weak:   { name: '迷いスライム',   emoji: '💧', hp: 60,   atk: 8,   def: 2,  speed: 2,  desc: '弱いスライム。' },
-            mid:    { name: '帝国の重装歩兵', emoji: '💂', hp: 500,  atk: 60,  def: 45, speed: 10, desc: '防御力が高い兵士。' },
-            boss:   { name: '魔王の化身',     emoji: '👿', hp: 1800, atk: 150, def: 60, speed: 30, desc: '破壊の化身。' }
+            weak: { name: 'Goblin', emoji: '💧', hp: 60, atk: 8, def: 2, speed: 2, desc: 'Goblin' },
+            mid: { name: 'Golden Golem', emoji: '💂', hp: 500, atk: 60, def: 45, speed: 10, desc: 'Golden Golem' },
+            boss: { name: 'Cosmic King', emoji: '🌎', hp: 1800, atk: 150, def: 60, speed: 30, desc: 'Cosmic King' }
         };
 
         const STAGES = [
@@ -119,7 +119,7 @@
         function updateItemDisplay() {
             document.getElementById('item-hp-count').textContent = globalItems.hp;
             document.getElementById('item-sp-count').textContent = globalItems.sp;
-            
+
             const btnHp = document.getElementById('btn-item-hp');
             const btnSp = document.getElementById('btn-item-sp');
             if (globalItems.hp <= 0) btnHp.classList.add('disabled');
@@ -133,8 +133,8 @@
                 const raw = localStorage.getItem(PARTY_KEY);
                 savedParty = raw ? JSON.parse(raw) : [];
                 if (!Array.isArray(savedParty)) savedParty = [savedParty];
-            } catch(e) { savedParty = []; }
-            
+            } catch (e) { savedParty = []; }
+
             playerParty = savedParty.filter(d => d && typeof d === 'object').map((data, index) => {
                 const stats = getCharStats(data);
                 return {
@@ -169,7 +169,7 @@
             const rarity = (data && data.rarity) ? data.rarity : 3;
             const stats = JSON.parse(JSON.stringify(CHAR_STATS[rarity] || CHAR_STATS[3]));
             const cname = (data && (data.displayName || data.name)) ? (data.displayName || data.name) : "";
-            
+
             if (cname.includes('ドラゴン')) { stats.hp = 1000; stats.atk = 100; stats.def = 100; stats.speed = 15; stats.crit = 0.10; }
             else if (cname.includes('アルタイル')) { stats.hp = 300; stats.atk = 150; stats.def = 20; stats.speed = 75; stats.crit = 0.30; }
             else if (cname.includes('サム')) { stats.hp = 800; stats.atk = 180; stats.def = 50; stats.speed = 45; stats.crit = 0.20; }
@@ -199,16 +199,16 @@
                         statusEffects: []
                     };
                 });
-                
+
                 document.getElementById('stage-info').textContent = `STAGE ${currentStage + 1} / ${STAGES.length}`;
                 renderParty('enemy');
-                
+
                 // ターゲットを初期化（新しいステージの最初の敵を狙う）
                 currentTarget = enemyParty.find(e => e.hp > 0) || null;
                 updateTargetUI();
-                
+
                 addLog(`<span style="color:#ffff00; font-weight:bold;">STAGE ${currentStage + 1}: 敵が現れた！</span>`);
-                
+
                 // 確実に画面を更新してからフラグを解除
                 setTimeout(() => {
                     isProcessing = false;
@@ -232,7 +232,7 @@
                     p.style.width = p.style.height = `${2 + Math.random() * 2}px`;
                     container.appendChild(p);
                 }
-            } catch(e) { console.error("Particles failed", e); }
+            } catch (e) { console.error("Particles failed", e); }
         }
 
         function renderParty(side) {
@@ -262,7 +262,7 @@
                     <div class="status-container">
                         <div class="hp-bar-container">
                             <div class="hp-label"><span>HP</span><span id="hp-text-${char.id}">${char.hp} / ${char.maxHp}</span></div>
-                            <div class="hp-bar-bg"><div class="hp-bar-fill ${side}-hp" id="hp-bar-${char.id}" style="width:${(char.hp/char.maxHp)*100}%"></div></div>
+                            <div class="hp-bar-bg"><div class="hp-bar-fill ${side}-hp" id="hp-bar-${char.id}" style="width:${(char.hp / char.maxHp) * 100}%"></div></div>
                         </div>
                         <div class="sp-bar-container">
                             <div class="sp-label"><span>${side === 'player' ? 'SP' : 'ULT'}</span><span id="sp-text-${char.id}">${char.sp}%</span></div>
@@ -296,7 +296,7 @@
         async function startTurnCycle() {
             if (isProcessing) return;
             activeChar = null; // 新しいサイクルのために現在行動者をリセット
-            
+
             // 速度順に全キャラを並べる
             const allChars = [...playerParty, ...enemyParty].filter(c => c.hp > 0);
             allChars.sort((a, b) => b.speed - a.speed);
@@ -328,7 +328,7 @@
             }
 
             updateTurnOrderUI();
-            
+
             // アクティブキャラを強調
             document.querySelectorAll('.char-card').forEach(c => c.classList.remove('active-turn'));
             document.getElementById(`card-${activeChar.id}`)?.classList.add('active-turn');
@@ -348,10 +348,10 @@
         function updateTurnOrderUI() {
             const container = document.getElementById('turn-order');
             container.innerHTML = '';
-            
+
             // 現在の行動者と、次に控えているキャラを結合して表示
             const displayQueue = activeChar ? [activeChar, ...turnQueue] : turnQueue;
-            
+
             displayQueue.slice(0, 5).forEach((char, i) => {
                 const item = document.createElement('div');
                 item.className = 'turn-order-item' + (i === 0 ? ' active' : '');
@@ -363,7 +363,7 @@
         // --- アクション ---
         async function executeCommand(type) {
             if (isProcessing || !activeChar || activeChar.side !== 'player') return;
-            
+
             // 必殺技のSP不足チェックを厳格化
             if (type === 'special' && activeChar.sp < 100) {
                 addLog(`<span style="color:#ff8888;">SPが足りません！</span>`);
@@ -374,160 +374,160 @@
             disableCommands(true);
             try {
 
-            let logMsg = "";
-            let damage = 0;
+                let logMsg = "";
+                let damage = 0;
 
-            if (type === 'attack') {
-                damage = calculateDamage(activeChar.atk, activeChar.crit, currentTarget.def);
-                logMsg = `${activeChar.name}の攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
-                applyDamage(currentTarget, damage);
-                activeChar.sp = Math.min(100, activeChar.sp + 20);
-                showDamageEffect(currentTarget.id, damage);
-            } 
-            else if (type === 'evade') {
-                activeChar.isEvading = true;
-                logMsg = `${activeChar.name}は身構えた！`;
-                activeChar.sp = Math.min(100, activeChar.sp + 10);
-            }
-            else if (type === 'special') {
-                const name = activeChar.name;
-                const charImgEl = document.querySelector(`#card-${activeChar.id} .char-avatar img`);
-                const fxLayer = document.getElementById('battle-fx-layer');
-                
-                // --- 中央カットイン演出 ---
-                const cutinOverlay = document.createElement('div');
-                cutinOverlay.className = 'ultimate-cutin-overlay';
-                const cutinImg = document.createElement('img');
-                cutinImg.className = 'ultimate-cutin-img';
-                
-                // 真の姿の画像パスを gacha.html およびユーザー指定と完全に一致させる
-                let specialImg = activeChar.img || "";
-                if (name.includes('サム')) {
-                    specialImg = 'image/ガチャ/「【星の狩人】サム2」星5.png';
-                } else if (name.includes('アルタイル')) {
-                    specialImg = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
-                } else if (name.includes('ドラゴン')) {
-                    // ドラゴンは2枚目がないためそのまま
-                    specialImg = activeChar.img || "";
-                }
-                cutinImg.src = specialImg;
-                
-                const flash = document.createElement('div');
-                flash.className = 'ultimate-bg-flash';
-                
-                cutinOverlay.appendChild(flash);
-                cutinOverlay.appendChild(cutinImg);
-                document.body.appendChild(cutinOverlay);
-                
-                setTimeout(() => cutinOverlay.remove(), 2000);
-                await wait(1200);
-
-                fxLayer.innerHTML = ''; 
-                if (name.includes('サム')) {
-                    fxLayer.className = 'sam-fx-active';
-                    logMsg = `究極奥義！【神域の矢】！ ${activeChar.name}が敵を殲滅する！`;
-                    addLog(logMsg);
-                    enemyParty.filter(e => e.hp > 0).forEach(e => {
-                        applyDamage(e, e.maxHp);
-                        showDamageEffect(e.id, e.maxHp, true);
-                    });
-                } else if (name.includes('ドラゴン')) {
-                    fxLayer.className = 'dragon-fx';
-                    const shockwave = document.createElement('div');
-                    shockwave.className = 'dragon-shockwave';
-                    fxLayer.appendChild(shockwave);
-                    for (let i = 0; i < 15; i++) {
-                        const meteor = document.createElement('div');
-                        meteor.className = 'dragon-meteor';
-                        meteor.innerHTML = `<img src="image/ガチャ/隕石${i % 2 === 0 ? '' : '2'}.png" style="width:100%;">`;
-                        meteor.style.left = `${Math.random() * 100}%`;
-                        fxLayer.appendChild(meteor);
-                    }
-                    logMsg = `究極奥義！【聖竜の息吹】！ 敵全体を光が包む！`;
-                    addLog(logMsg);
-                    enemyParty.filter(e => e.hp > 0).forEach(e => {
-                        const dmg = Math.floor(e.maxHp * 0.5);
-                        applyDamage(e, dmg);
-                        showDamageEffect(e.id, dmg, true);
-                    });
-                } else if (name.includes('アルタイル')) {
-                    fxLayer.className = 'altair-fx';
-                    const pillar = document.createElement('div');
-                    pillar.className = 'altair-fire-pillar';
-                    fxLayer.appendChild(pillar);
-                    logMsg = `究極奥義！【恒星の獄炎】！ 敵全体を永劫の炎が焼き尽くす！`;
-                    addLog(logMsg);
-                    enemyParty.filter(e => e.hp > 0).forEach(e => {
-                        if (!e.statusEffects) e.statusEffects = [];
-                        if (!e.statusEffects.includes('burn')) e.statusEffects.push('burn');
-                        const dmg = Math.floor(activeChar.atk * 0.5); 
-                        applyDamage(e, dmg);
-                        showDamageEffect(e.id, dmg, true);
-                    });
-                } else {
-                    damage = calculateDamage(activeChar.atk * 3.0, 1.0, currentTarget.def);
-                    logMsg = `必殺技！ ${activeChar.name}の極大攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
+                if (type === 'attack') {
+                    damage = calculateDamage(activeChar.atk, activeChar.crit, currentTarget.def);
+                    logMsg = `${activeChar.name}の攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
                     applyDamage(currentTarget, damage);
-                    showDamageEffect(currentTarget.id, damage, true);
+                    activeChar.sp = Math.min(100, activeChar.sp + 20);
+                    showDamageEffect(currentTarget.id, damage);
                 }
-                
-                await wait(800);
-                fxLayer.innerHTML = '';
-                fxLayer.className = '';
-                activeChar.sp = 0;
-                logMsg = ""; 
-            }
-            else if (type.startsWith('item')) {
-                const itemType = type === 'item-hp' ? 'hp' : 'sp';
-                if (globalItems[itemType] <= 0) {
-                    addLog("<span style='color:#ff8888;'>アイテムが足りません！</span>");
+                else if (type === 'evade') {
+                    activeChar.isEvading = true;
+                    logMsg = `${activeChar.name}は身構えた！`;
+                    activeChar.sp = Math.min(100, activeChar.sp + 10);
+                }
+                else if (type === 'special') {
+                    const name = activeChar.name;
+                    const charImgEl = document.querySelector(`#card-${activeChar.id} .char-avatar img`);
+                    const fxLayer = document.getElementById('battle-fx-layer');
+
+                    // --- 中央カットイン演出 ---
+                    const cutinOverlay = document.createElement('div');
+                    cutinOverlay.className = 'ultimate-cutin-overlay';
+                    const cutinImg = document.createElement('img');
+                    cutinImg.className = 'ultimate-cutin-img';
+
+                    // 真の姿の画像パスを gacha.html およびユーザー指定と完全に一致させる
+                    let specialImg = activeChar.img || "";
+                    if (name.includes('サム')) {
+                        specialImg = 'image/ガチャ/「【星の狩人】サム2」星5.png';
+                    } else if (name.includes('アルタイル')) {
+                        specialImg = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
+                    } else if (name.includes('ドラゴン')) {
+                        // ドラゴンは2枚目がないためそのまま
+                        specialImg = activeChar.img || "";
+                    }
+                    cutinImg.src = specialImg;
+
+                    const flash = document.createElement('div');
+                    flash.className = 'ultimate-bg-flash';
+
+                    cutinOverlay.appendChild(flash);
+                    cutinOverlay.appendChild(cutinImg);
+                    document.body.appendChild(cutinOverlay);
+
+                    setTimeout(() => cutinOverlay.remove(), 2000);
+                    await wait(1200);
+
+                    fxLayer.innerHTML = '';
+                    if (name.includes('サム')) {
+                        fxLayer.className = 'sam-fx-active';
+                        logMsg = `究極奥義！【神域の矢】！ ${activeChar.name}が敵を殲滅する！`;
+                        addLog(logMsg);
+                        enemyParty.filter(e => e.hp > 0).forEach(e => {
+                            applyDamage(e, e.maxHp);
+                            showDamageEffect(e.id, e.maxHp, true);
+                        });
+                    } else if (name.includes('ドラゴン')) {
+                        fxLayer.className = 'dragon-fx';
+                        const shockwave = document.createElement('div');
+                        shockwave.className = 'dragon-shockwave';
+                        fxLayer.appendChild(shockwave);
+                        for (let i = 0; i < 15; i++) {
+                            const meteor = document.createElement('div');
+                            meteor.className = 'dragon-meteor';
+                            meteor.innerHTML = `<img src="image/ガチャ/隕石${i % 2 === 0 ? '' : '2'}.png" style="width:100%;">`;
+                            meteor.style.left = `${Math.random() * 100}%`;
+                            fxLayer.appendChild(meteor);
+                        }
+                        logMsg = `究極奥義！【聖竜の息吹】！ 敵全体を光が包む！`;
+                        addLog(logMsg);
+                        enemyParty.filter(e => e.hp > 0).forEach(e => {
+                            const dmg = Math.floor(e.maxHp * 0.5);
+                            applyDamage(e, dmg);
+                            showDamageEffect(e.id, dmg, true);
+                        });
+                    } else if (name.includes('アルタイル')) {
+                        fxLayer.className = 'altair-fx';
+                        const pillar = document.createElement('div');
+                        pillar.className = 'altair-fire-pillar';
+                        fxLayer.appendChild(pillar);
+                        logMsg = `究極奥義！【恒星の獄炎】！ 敵全体を永劫の炎が焼き尽くす！`;
+                        addLog(logMsg);
+                        enemyParty.filter(e => e.hp > 0).forEach(e => {
+                            if (!e.statusEffects) e.statusEffects = [];
+                            if (!e.statusEffects.includes('burn')) e.statusEffects.push('burn');
+                            const dmg = Math.floor(activeChar.atk * 0.5);
+                            applyDamage(e, dmg);
+                            showDamageEffect(e.id, dmg, true);
+                        });
+                    } else {
+                        damage = calculateDamage(activeChar.atk * 3.0, 1.0, currentTarget.def);
+                        logMsg = `必殺技！ ${activeChar.name}の極大攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
+                        applyDamage(currentTarget, damage);
+                        showDamageEffect(currentTarget.id, damage, true);
+                    }
+
+                    await wait(800);
+                    fxLayer.innerHTML = '';
+                    fxLayer.className = '';
+                    activeChar.sp = 0;
+                    logMsg = "";
+                }
+                else if (type.startsWith('item')) {
+                    const itemType = type === 'item-hp' ? 'hp' : 'sp';
+                    if (globalItems[itemType] <= 0) {
+                        addLog("<span style='color:#ff8888;'>アイテムが足りません！</span>");
+                        isProcessing = false;
+                        disableCommands(false);
+                        return;
+                    }
+
+                    if (type === 'item-hp') {
+                        const heal = Math.floor(activeChar.maxHp * 0.5);
+                        activeChar.hp = Math.min(activeChar.maxHp, activeChar.hp + heal);
+                        logMsg = `回復薬を使用！ ${activeChar.name}のHPが回復！`;
+                        globalItems.hp--;
+                    } else {
+                        activeChar.sp = Math.min(100, activeChar.sp + 40);
+                        logMsg = `SPチャージを使用！ ${activeChar.name}のSPが増加！`;
+                        globalItems.sp--;
+                    }
+                    updateItemDisplay();
+                }
+
+                if (logMsg) addLog(logMsg);
+                updateStatusAll();
+
+                // 敵全滅チェック：即座に次へ
+                if (enemyParty.every(e => e.hp <= 0)) {
+                    isProcessing = true;
+                    checkWinLoss();
+                    return;
+                }
+
+                await wait(600);
+                if (checkWinLoss()) return;
+
+                // 追加行動判定
+                if (activeChar.speed >= 30 && Math.random() < 0.20 && !activeChar.isExtraTurn) {
+                    addLog(`<span style="color:#00ffff; font-weight:900;">SPEED BOOSTER! ${activeChar.name}の連続行動！</span>`);
+                    activeChar.isExtraTurn = true;
                     isProcessing = false;
                     disableCommands(false);
                     return;
                 }
-                
-                if (type === 'item-hp') {
-                    const heal = Math.floor(activeChar.maxHp * 0.5);
-                    activeChar.hp = Math.min(activeChar.maxHp, activeChar.hp + heal);
-                    logMsg = `回復薬を使用！ ${activeChar.name}のHPが回復！`;
-                    globalItems.hp--;
-                } else {
-                    activeChar.sp = Math.min(100, activeChar.sp + 40);
-                    logMsg = `SPチャージを使用！ ${activeChar.name}のSPが増加！`;
-                    globalItems.sp--;
-                }
-                updateItemDisplay();
-            }
-
-            if (logMsg) addLog(logMsg);
-            updateStatusAll();
-
-            // 敵全滅チェック：即座に次へ
-            if (enemyParty.every(e => e.hp <= 0)) {
-                isProcessing = true;
-                checkWinLoss();
-                return; 
-            }
-
-            await wait(600);
-            if (checkWinLoss()) return;
-
-            // 追加行動判定
-            if (activeChar.speed >= 30 && Math.random() < 0.20 && !activeChar.isExtraTurn) {
-                addLog(`<span style="color:#00ffff; font-weight:900;">SPEED BOOSTER! ${activeChar.name}の連続行動！</span>`);
-                activeChar.isExtraTurn = true;
+                activeChar.isExtraTurn = false;
+                nextTurn();
+            } catch (err) {
+                console.error("Command Error:", err);
                 isProcessing = false;
                 disableCommands(false);
-                return;
             }
-            activeChar.isExtraTurn = false;
-            nextTurn();
-        } catch (err) {
-            console.error("Command Error:", err);
-            isProcessing = false;
-            disableCommands(false);
         }
-    }
 
         async function enemyAction(enemy) {
             // ランダムな味方を狙う
@@ -574,7 +574,7 @@
 
         function applyDamage(target, dmg) {
             target.hp = Math.max(0, target.hp - dmg);
-            
+
             // 即座にHPバーへ反映
             updateStatusAll();
 
@@ -586,7 +586,7 @@
                     el.style.pointerEvents = 'none';
                 }
                 addLog(`${target.name}を撃破！`);
-                
+
                 // ターゲットが倒れた場合、自動で次を探す
                 if (currentTarget === target) {
                     currentTarget = enemyParty.find(e => e.hp > 0) || null;
@@ -612,7 +612,7 @@
             if (enemyParty.every(e => e.hp <= 0)) {
                 currentStage++;
                 if (currentStage >= STAGES.length) {
-                    showOverlay('VICTORY', '魔王を討伐し、世界に平和が訪れた！', 'タイトルへ', 'victory');
+                    showOverlay('VICTORY', '帝王を倒し、銀河に平和が訪れた！', 'タイトルへ戻る', 'victory');
                 } else {
                     addLog(`敵を全滅させた！ 次の戦いへ...`);
                     setTimeout(loadStage, 1500);
@@ -651,7 +651,7 @@
             void avatar.offsetWidth;
             avatar.classList.add('shake');
             if (isCrit) avatar.classList.add('hit-effect');
-            
+
             const p = document.createElement('div');
             p.className = 'damage-popup';
             p.textContent = `-${dmg}`;

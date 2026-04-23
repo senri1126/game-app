@@ -55,8 +55,10 @@
             inset: 0;
             z-index: -1;
             background-image: url('image/タイトル画像.png');
-            background-size: 80% auto; /* サイズを少し小さく */
-            background-position: center 95%; /* さらに下に下げる */
+            background-size: 80% auto;
+            /* サイズを少し小さく */
+            background-position: center 95%;
+            /* さらに下に下げる */
             background-repeat: no-repeat;
         }
 
@@ -76,10 +78,23 @@
         }
 
         @keyframes float {
-            0% { transform: translateY(0) scale(0); opacity: 0; }
-            10% { opacity: 0.5; }
-            90% { opacity: 0.5; }
-            100% { transform: translateY(-110vh) scale(1); opacity: 0; }
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-110vh) scale(1);
+                opacity: 0;
+            }
         }
 
         .title-container {
@@ -174,10 +189,11 @@
             color: #444;
         }
 
-        /* ゲームタイトルロゴ（スターレイル風） */
+        /* ゲームタイトルロゴ */
         .game-logo {
             position: absolute;
-            bottom: 190px; /* さらに少し下へ */
+            bottom: 190px;
+            /* さらに少し下へ */
             left: 5%;
             z-index: 20;
             display: flex;
@@ -189,7 +205,8 @@
 
         .logo-main {
             font-family: 'Noto Sans JP', sans-serif;
-            font-size: 3.2rem; /* サイズ縮小 */
+            font-size: 3.2rem;
+            /* サイズ縮小 */
             font-weight: 900;
             font-style: italic;
             letter-spacing: -1px;
@@ -213,9 +230,11 @@
 
         .logo-sub {
             font-family: 'Shippori Mincho', serif;
-            font-size: 1.3rem; /* サイズ縮小 */
+            font-size: 1.3rem;
+            /* サイズ縮小 */
             font-weight: 800;
-            color: #fff2cc; /* より明るい発色に変更 */
+            color: #fff2cc;
+            /* より明るい発色に変更 */
             margin-top: 10px;
             margin-left: 10px;
             letter-spacing: 0.3em;
@@ -237,39 +256,54 @@
         }
 
         @keyframes flareMove {
-            0% { left: -150%; }
-            20% { left: 150%; }
-            100% { left: 150%; }
+            0% {
+                left: -150%;
+            }
+
+            20% {
+                left: 150%;
+            }
+
+            100% {
+                left: 150%;
+            }
         }
 
         @keyframes logoFadeIn {
-            from { opacity: 0; transform: translateX(-50px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
-            @media (max-width: 768px) {
-                .logo-main {
-                    font-size: 2.5rem;
-                }
-
-                .logo-sub {
-                    font-size: 1.2rem;
-                }
-
-                .game-logo {
-                    top: 5%;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    align-items: center;
-                }
-
-                .logo-sub {
-                    border-left: none;
-                    border-bottom: 2px solid #ffcc00;
-                    padding-left: 0;
-                    padding-bottom: 5px;
-                }
+        @media (max-width: 768px) {
+            .logo-main {
+                font-size: 2.5rem;
             }
+
+            .logo-sub {
+                font-size: 1.2rem;
+            }
+
+            .game-logo {
+                top: 5%;
+                left: 50%;
+                transform: translateX(-50%);
+                align-items: center;
+            }
+
+            .logo-sub {
+                border-left: none;
+                border-bottom: 2px solid #ffcc00;
+                padding-left: 0;
+                padding-bottom: 5px;
+            }
+        }
     </style>
 </head>
 
@@ -316,11 +350,11 @@
             const size = Math.random() * 3 + 1;
             p.style.width = size + 'px';
             p.style.height = size + 'px';
-            
+
             // 最初から画面全体に散らばるように配置
             p.style.left = Math.random() * 100 + 'vw';
             p.style.top = Math.random() * 100 + 'vh';
-            
+
             p.style.animationDuration = (Math.random() * 15 + 15) + 's';
             p.style.animationDelay = (Math.random() * -30) + 's'; // 負のディレイで既に動いている状態にする
             particlesContainer.appendChild(p);
