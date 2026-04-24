@@ -380,6 +380,9 @@
         }
 
         async function nextTurn() {
+            // ターンを進める前に勝敗チェック
+            if (checkWinLoss()) return;
+
             if (turnQueue.length === 0) {
                 isProcessing = false;
                 startTurnCycle();
@@ -528,6 +531,16 @@
                     applyDamage(currentTarget, damage);
                     activeChar.sp = Math.min(100, activeChar.sp + 20);
                     showDamageEffect(currentTarget.id, damage);
+
+                    // 攻撃直後に全滅チェック（waitを挟まず即判定）
+                    if (logMsg) addLog(logMsg);
+                    updateStatusAll();
+                    if (enemyParty.every(e => e.hp <= 0)) {
+                        isProcessing = true;
+                        checkWinLoss();
+                        return;
+                    }
+                    logMsg = ""; // 後続の重複addLogを防ぐ
                 }
                 else if (type === 'evade') {
                     activeChar.isEvading = true;
@@ -647,7 +660,7 @@
                 if (logMsg) addLog(logMsg);
                 updateStatusAll();
 
-                // 敵全滅チェック：即座に次へ
+                // 敵全滅チェック：即座に次のステージへ
                 if (enemyParty.every(e => e.hp <= 0)) {
                     isProcessing = true;
                     checkWinLoss();
@@ -655,11 +668,26 @@
                 }
 
                 await wait(600);
-                if (checkWinLoss()) return;
 
-                // 追加行動判定
+                // wait後も再チェック（やけどなどで遅延全滅した場合）
+                if (enemyParty.every(e => e.hp <= 0)) {
+                    isProcessing = true;
+                    checkWinLoss();
+                    return;
+                }
+
+                // 追加行動判定（敵が残っている場合のみ）
                 if (activeChar.speed >= 30 && Math.random() < 0.20 && !activeChar.isExtraTurn) {
                     addLog(`<span style="color:#00ffff; font-weight:900;">SPEED BOOSTER! ${activeChar.name}の連続行動！</span>`);
+                    // キャラの頭上にBOOST!!表示
+                    const avatar = document.getElementById(`avatar-${activeChar.id}`);
+                    if (avatar) {
+                        const boost = document.createElement('div');
+                        boost.className = 'boost-label';
+                        boost.textContent = 'BOOST!!';
+                        avatar.appendChild(boost);
+                        setTimeout(() => boost.remove(), 1200);
+                    }
                     activeChar.isExtraTurn = true;
                     isProcessing = false;
                     disableCommands(false);
@@ -681,11 +709,20 @@
             const target = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
 
             addLog(`${enemy.name}の攻撃！`);
+
+            // 敵が揺れる演出
+            const enemyCard = document.getElementById(`card-${enemy.id}`);
+            if (enemyCard) {
+                enemyCard.classList.add('enemy-attack-shake');
+                setTimeout(() => enemyCard.classList.remove('enemy-attack-shake'), 600);
+            }
+
             await wait(500);
 
             const evadeRate = target.speed >= 30 ? 0.70 : 0.50;
             if (target.isEvading && Math.random() < evadeRate) {
                 addLog(`<span style="color:#00ffcc;">MISS! ${target.name}は回避した！</span>`);
+                showMissEffect(target.id);
                 target.isEvading = false;
                 if (target.speed >= 30 && Math.random() < 0.30) {
                     addLog(`<span style="color:#00ffff;">COUNTER! 追加行動！</span>`);
@@ -756,10 +793,15 @@
         function checkWinLoss() {
             if (enemyParty.every(e => e.hp <= 0)) {
                 currentStage++;
+                isProcessing = true;
+                disableCommands(true);
+                turnQueue = []; // 残りのターンをすべてキャンセル
                 if (currentStage >= STAGES.length) {
                     showOverlay('Congratulations🎉🎉🎉', '帝王を倒し、銀河に平和が訪れた！', 'タイトルへ戻る', 'victory');
                 } else {
                     addLog(`敵を全滅させた！ 次の戦いへ...`);
+                    isProcessing = true;
+                    disableCommands(true);
                     setTimeout(loadStage, 1500);
                 }
                 return true;
@@ -801,7 +843,23 @@
             p.className = 'damage-popup';
             p.textContent = `-${dmg}`;
             avatar.appendChild(p);
-            setTimeout(() => p.remove(), 1000);
+
+            const hit = document.createElement('div');
+            hit.className = 'hit-label';
+            hit.textContent = 'HIT!';
+            avatar.appendChild(hit);
+
+            setTimeout(() => { p.remove(); hit.remove(); }, 1000);
+        }
+
+        function showMissEffect(id) {
+            const avatar = document.getElementById(`avatar-${id}`);
+            if (!avatar) return;
+            const miss = document.createElement('div');
+            miss.className = 'miss-label';
+            miss.textContent = 'MISS...';
+            avatar.appendChild(miss);
+            setTimeout(() => miss.remove(), 1000);
         }
 
         function gameOver() {
