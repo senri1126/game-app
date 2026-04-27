@@ -1211,6 +1211,22 @@ body {
     letter-spacing: 2px;
 }
 
+.heal-label {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 0 6px #00cc44, 0 0 14px #00ff66, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
+    pointer-events: none;
+    animation: damage-float 1s cubic-bezier(0.2, 0.8, 0.3, 1.2) forwards;
+    z-index: 200;
+    white-space: nowrap;
+    letter-spacing: 2px;
+}
+
 .boost-label {
     position: absolute;
     top: 0%;
@@ -1431,4 +1447,171 @@ body {
         transform: translate(-50%, -50%) scale(1.2);
         opacity: 0;
     }
+}
+
+/* --- 直近ログ1行表示 --- */
+.latest-log {
+    position: fixed;
+    top: 65px;
+    left: 110px;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    color: #fff;
+    white-space: nowrap;
+    pointer-events: none;
+    max-width: calc(100vw - 130px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    line-height: 1.4;
+}
+
+.latest-log-anim {
+    animation: latest-log-fade 3s ease forwards;
+}
+
+@keyframes latest-log-fade {
+    0%   { opacity: 1; }
+    70%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* =========================================================
+   Boss Intro Animation
+   ========================================================= */
+
+/* 画面震え（強） */
+@keyframes screen-quake-anim {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    10%  { transform: translate(-8px, -6px) rotate(-0.5deg); }
+    20%  { transform: translate(8px, 6px) rotate(0.5deg); }
+    30%  { transform: translate(-10px, 4px) rotate(-0.3deg); }
+    40%  { transform: translate(10px, -4px) rotate(0.3deg); }
+    50%  { transform: translate(-6px, 8px) rotate(-0.5deg); }
+    60%  { transform: translate(6px, -8px) rotate(0.5deg); }
+    70%  { transform: translate(-4px, 4px) rotate(-0.2deg); }
+    80%  { transform: translate(4px, -4px) rotate(0.2deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+.screen-quake { animation: screen-quake-anim 0.8s ease-out; }
+
+/* 画面震え（軽・咆哮時） */
+@keyframes screen-quake-light-anim {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-5px, -3px); }
+    50%  { transform: translate(5px, 3px); }
+    75%  { transform: translate(-3px, 5px); }
+    100% { transform: translate(0, 0); }
+}
+.screen-quake-light { animation: screen-quake-light-anim 0.4s ease-out; }
+
+/* フェーズ1: シルエット状態 */
+.boss-silhouette img {
+    filter: brightness(0) !important;
+    transition: none !important;
+}
+
+/* フェーズ1: 奥から戦闘サイズ scale(2.0) まで3歩歩いてくる */
+@keyframes boss-walk-in {
+    0%   { transform: scale(0.28) translateY(220px);  opacity: 0.4; }
+    /* 1歩目 ドスン */
+    14%  { transform: scale(0.55) translateY(130px) translateX(8px);  opacity: 0.7; }
+    22%  { transform: scale(0.58) translateY(122px) translateX(-8px); }
+    /* 2歩目 ドスン */
+    38%  { transform: scale(1.05) translateY(58px) translateX(10px);  opacity: 0.9; }
+    48%  { transform: scale(1.08) translateY(48px) translateX(-10px); }
+    /* 3歩目 大きく踏み込む */
+    64%  { transform: scale(1.75) translateY(10px) translateX(12px);  opacity: 1; }
+    76%  { transform: scale(1.80) translateY(4px)  translateX(-8px); }
+    /* 最終位置：戦闘サイズ */
+    90%  { transform: scale(2.08) translateY(-5px); }
+    100% { transform: scale(2.0)  translateY(0);    opacity: 1; }
+}
+.boss-intro-walk .char-avatar img {
+    animation: boss-walk-in 3.2s cubic-bezier(0.25, 0, 0.35, 1) forwards !important;
+}
+
+/* フェーズ2: 力を溜める（収縮→静止）— 戦闘サイズ基準 */
+@keyframes boss-charge-anim {
+    0%   { transform: scale(2.0);  filter: brightness(0); }
+    25%  { transform: scale(1.82); filter: brightness(0); }
+    55%  { transform: scale(1.78); filter: brightness(0) drop-shadow(0 0 20px #000066); }
+    100% { transform: scale(1.80); filter: brightness(0) drop-shadow(0 0 30px #000088); }
+}
+.boss-charge img {
+    animation: boss-charge-anim 2s ease-in-out forwards !important;
+}
+
+/* フェーズ3: 青オーラ解放＋咆哮ズームイン/アウト — 戦闘サイズ基準 */
+@keyframes boss-reveal-aura-anim {
+    0%   { transform: scale(1.80); filter: brightness(0); }
+    8%   { transform: scale(2.5);  filter: brightness(4) drop-shadow(0 0 60px #00ccff) drop-shadow(0 0 120px #0033ff); }
+    22%  { transform: scale(1.88); filter: brightness(2) drop-shadow(0 0 30px #0088ff); }
+    38%  { transform: scale(2.3);  filter: brightness(3) drop-shadow(0 0 80px #00eeff) drop-shadow(0 0 150px #0011ff); }
+    54%  { transform: scale(1.92); filter: brightness(1.5) drop-shadow(0 0 20px #0066ff); }
+    70%  { transform: scale(2.15); filter: brightness(2) drop-shadow(0 0 40px #00aaff); }
+    100% { transform: scale(2.0);  filter: brightness(1); }
+}
+.boss-reveal-aura img {
+    animation: boss-reveal-aura-anim 2.2s ease-in-out forwards !important;
+}
+
+/* フェーズ3: シルエット解除（明転） */
+.boss-silhouette-reveal img {
+    transition: filter 1.0s ease !important;
+    filter: brightness(1) !important;
+}
+
+/* 足音震え（歩くたびのドスン・地面が揺れる感） */
+@keyframes screen-quake-step-anim {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    8%   { transform: translate(0, 12px) rotate(0.4deg); }
+    22%  { transform: translate(-8px, -6px) rotate(-0.5deg); }
+    38%  { transform: translate(8px, 5px) rotate(0.4deg); }
+    58%  { transform: translate(-5px, -4px) rotate(-0.2deg); }
+    78%  { transform: translate(4px, 3px) rotate(0.1deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+.screen-quake-step {
+    animation: screen-quake-step-anim 0.45s ease-out;
+}
+
+/* 青オーラ粒子 */
+.boss-aura-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #00ccff 40%, #0044ff 100%);
+    box-shadow: 0 0 8px #00aaff, 0 0 16px #0044ff;
+    pointer-events: none;
+    z-index: 501;
+    animation: boss-particle-fly var(--dur, 0.8s) ease-out forwards;
+}
+@keyframes boss-particle-fly {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx, 0px), var(--ty, -80px)) scale(0); opacity: 0; }
+}
+
+/* 咆哮衝撃波（青い円） */
+.boss-roar-wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 8px solid rgba(0, 200, 255, 0.95);
+    box-shadow: 0 0 30px #00aaff, 0 0 60px #0044ff, inset 0 0 30px rgba(0, 150, 255, 0.4);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    animation: boss-wave-expand 1s ease-out forwards;
+    z-index: 500;
+}
+@keyframes boss-wave-expand {
+    0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; border-width: 10px; }
+    50%  { opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(20); opacity: 0; border-width: 1px; }
 }

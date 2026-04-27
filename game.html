@@ -23,6 +23,9 @@
     <a href="index.html" class="nav-back">← タイトルに戻る</a>
     <button class="log-btn" onclick="toggleLog()">📜 LOG</button>
 
+    <!-- 直近ログ1行表示 -->
+    <div class="latest-log" id="latest-log"></div>
+
     <div class="game-header">
         <div class="game-title">⚔ CHARACTER BATTLE ⚔</div>
         <div class="stage-info" id="stage-info">STAGE 1 / 3</div>
@@ -192,6 +195,83 @@
             return stats;
         }
 
+        function playBossIntro(onComplete) {
+            const bossParty = enemyParty.find(e => e.name === 'Cosmic King');
+            if (!bossParty) { onComplete(); return; }
+
+            const bossCard = document.getElementById(`card-${bossParty.id}`);
+            const bossAvatar = document.getElementById(`avatar-${bossParty.id}`);
+            const fxLayer = document.getElementById('battle-fx-layer');
+
+            // --- フェーズ1: シルエットで3歩歩いてくる (0〜3200ms) ---
+            if (bossAvatar) bossAvatar.classList.add('boss-silhouette');
+            if (bossCard)   bossCard.classList.add('boss-intro-walk');
+
+            // 歩行アニメのキーフレームに合わせた足音ドスン
+            [500, 1300, 2100].forEach(t => {
+                setTimeout(() => {
+                    document.body.classList.add('screen-quake-step');
+                    setTimeout(() => document.body.classList.remove('screen-quake-step'), 450);
+                }, t);
+            });
+
+            // --- フェーズ2 (3200ms): 停止して力を溜める (2000ms) ---
+            setTimeout(() => {
+                if (bossCard) bossCard.classList.remove('boss-intro-walk');
+                if (bossAvatar) bossAvatar.classList.add('boss-charge');
+            }, 3200);
+
+            // --- フェーズ3 (5200ms): 貯め解放＋シルエット解除を同時に ---
+            setTimeout(() => {
+                if (bossAvatar) {
+                    bossAvatar.classList.remove('boss-charge');
+                    bossAvatar.classList.add('boss-reveal-aura');
+                    bossAvatar.classList.add('boss-silhouette-reveal');
+                    setTimeout(() => {
+                        bossAvatar.classList.remove('boss-silhouette', 'boss-silhouette-reveal', 'boss-reveal-aura');
+                    }, 1200);
+                }
+
+                // 青い粒子を大量に四方へ
+                for (let i = 0; i < 60; i++) {
+                    setTimeout(() => {
+                        const p = document.createElement('div');
+                        p.className = 'boss-aura-particle';
+                        p.style.left = (20 + Math.random() * 60) + '%';
+                        p.style.top  = (10 + Math.random() * 70) + '%';
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist  = 80 + Math.random() * 180;
+                        p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+                        p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+                        p.style.setProperty('--dur', (0.4 + Math.random() * 0.9) + 's');
+                        p.style.width = p.style.height = (4 + Math.random() * 12) + 'px';
+                        fxLayer.appendChild(p);
+                        setTimeout(() => p.remove(), 1500);
+                    }, i * 25);
+                }
+
+                // 衝撃波3連発（強め・画面震えも強く）
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const wave = document.createElement('div');
+                        wave.className = 'boss-roar-wave';
+                        fxLayer.appendChild(wave);
+                        setTimeout(() => wave.remove(), 1200);
+                        document.body.classList.add('screen-quake');
+                        setTimeout(() => document.body.classList.remove('screen-quake'), 500);
+                    }, i * 550);
+                }
+
+            }, 5200);
+
+            // --- フェーズ4 (7500ms): バトル開始 ---
+            setTimeout(() => {
+                fxLayer.innerHTML = '';
+                addLog(`<span style="color:#ff4444; font-weight:bold;">⚠ BOSS: Cosmic King が現れた！</span>`);
+                onComplete();
+            }, 7500);
+        }
+
         function loadStage() {
             try {
                 isProcessing = true; // 読み込み中は操作禁止
@@ -234,11 +314,18 @@
 
                 addLog(`<span style="color:#ffff00; font-weight:bold;">STAGE ${currentStage + 1}: 敵が現れた！</span>`);
 
-                // 確実に画面を更新してからフラグを解除
-                setTimeout(() => {
-                    isProcessing = false;
-                    startTurnCycle();
-                }, 500);
+                // ステージ3はボス登場演出を挟む
+                if (currentStage === STAGES.length - 1) {
+                    playBossIntro(() => {
+                        isProcessing = false;
+                        startTurnCycle();
+                    });
+                } else {
+                    setTimeout(() => {
+                        isProcessing = false;
+                        startTurnCycle();
+                    }, 500);
+                }
             } catch (e) {
                 console.error("LoadStage Error:", e);
                 isProcessing = false;
@@ -646,9 +733,12 @@
 
                     if (type === 'item-hp') {
                         const heal = Math.floor(activeChar.maxHp * 0.5);
+                        const hpBefore = activeChar.hp;
                         activeChar.hp = Math.min(activeChar.maxHp, activeChar.hp + heal);
+                        const actualHeal = activeChar.hp - hpBefore;
                         logMsg = `回復薬を使用！ ${activeChar.name}のHPが回復！`;
                         globalItems.hp--;
+                        showHealEffect(activeChar.id, actualHeal);
                     } else {
                         activeChar.sp = Math.min(100, activeChar.sp + 40);
                         logMsg = `SPチャージを使用！ ${activeChar.name}のSPが増加！`;
@@ -797,7 +887,7 @@
                 disableCommands(true);
                 turnQueue = []; // 残りのターンをすべてキャンセル
                 if (currentStage >= STAGES.length) {
-                    showOverlay('Congratulations🎉🎉🎉', '帝王を倒し、銀河に平和が訪れた！', 'タイトルへ戻る', 'victory');
+                    showOverlay('Congratulations🎉🎉🎉', '銀河の帝王を倒した。<br>冒険はまだまだ続く．．．', 'タイトルへ戻る', 'victory');
                 } else {
                     addLog(`敵を全滅させた！ 次の戦いへ...`);
                     isProcessing = true;
@@ -862,6 +952,18 @@
             setTimeout(() => miss.remove(), 1000);
         }
 
+        function showHealEffect(id, amount) {
+            const card = document.getElementById(`card-${id}`);
+            const avatar = document.getElementById(`avatar-${id}`);
+            const anchor = card || avatar;
+            if (!anchor) return;
+            const el = document.createElement('div');
+            el.className = 'heal-label';
+            el.textContent = `+${amount}`;
+            anchor.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
         function gameOver() {
             showOverlay('DEFEAT', `負けてしまった...<br>ガチャで強いキャラクターを手に入れて再挑戦しよう！`, 'リトライ', 'defeat');
         }
@@ -899,8 +1001,16 @@
             const entry = document.createElement('div');
             entry.innerHTML = msg;
             log.appendChild(entry);
-            // ログが追加されたら自動スクロール
             log.scrollTop = log.scrollHeight;
+
+            // 直近1行を常時表示エリアにも反映
+            const latest = document.getElementById('latest-log');
+            if (latest) {
+                latest.innerHTML = msg;
+                latest.classList.remove('latest-log-anim');
+                void latest.offsetWidth;
+                latest.classList.add('latest-log-anim');
+            }
         }
 
         function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
