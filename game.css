@@ -318,6 +318,23 @@ body {
     display: none;
 }
 
+/* ボス名：立ち絵の上部に重ねて表示 */
+.boss-name-overlay {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 3px;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+    pointer-events: none;
+}
+
 .boss-layout .char-card.enemy-small {
     position: absolute;
     bottom: 0px;
@@ -1614,4 +1631,269 @@ body {
     0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; border-width: 10px; }
     50%  { opacity: 0.8; }
     100% { transform: translate(-50%, -50%) scale(20); opacity: 0; border-width: 1px; }
+}
+
+/* =========================================================
+   Ultimate Special Effects
+   ========================================================= */
+
+/* アルタイル：敵全体を赤く燃え上がらせる */
+.fire-hit-ultimate {
+    position: relative;
+}
+.fire-hit-ultimate::after {
+    content: "";
+    position: absolute;
+    inset: -60px;
+    background: radial-gradient(circle, rgba(255, 60, 0, 0.95), rgba(255, 150, 0, 0.6) 50%, transparent 80%);
+    z-index: 20;
+    animation: fire-ultimate 1.2s ease-out forwards;
+    pointer-events: none;
+    border-radius: 50%;
+}
+@keyframes fire-ultimate {
+    0%   { transform: scale(0.3); opacity: 0; }
+    20%  { opacity: 1; }
+    60%  { transform: scale(1.8); opacity: 0.9; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* サム：黄金炎オーラを纏って落下 */
+.sam-fall-aura {
+    position: fixed;
+    top: -120px;
+    width: 80px;
+    height: 120px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, #fff 0%, #ffd700 30%, #ff6600 70%, transparent 100%);
+    border-radius: 50%;
+    filter: blur(6px) drop-shadow(0 0 30px #ffd700) drop-shadow(0 0 60px #ff4400);
+    z-index: 999;
+    pointer-events: none;
+    transition: top 0.7s cubic-bezier(0.5, 0, 1, 0.8);
+}
+.sam-fall-aura.sam-fall-drop {
+    top: var(--fall-target, 50vh);
+}
+
+/* サム：大爆発 */
+.sam-explosion {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #fff 0%, #ffd700 30%, #ff4400 60%, transparent 100%);
+    z-index: 1000;
+    pointer-events: none;
+    animation: sam-explode 0.8s ease-out forwards;
+}
+@keyframes sam-explode {
+    0%   { transform: translate(-50%, -50%) scale(0);   opacity: 1; filter: brightness(5); }
+    30%  { transform: translate(-50%, -50%) scale(8);   opacity: 1; filter: brightness(3); }
+    70%  { transform: translate(-50%, -50%) scale(18);  opacity: 0.6; }
+    100% { transform: translate(-50%, -50%) scale(25);  opacity: 0; }
+}
+
+/* ドラゴン：隕石落下 */
+.meteor-fall {
+    position: fixed;
+    width: 80px;
+    object-fit: contain;
+    z-index: 999;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px #ff6600) drop-shadow(0 0 20px #ff2200);
+    animation: meteor-drop 0.5s cubic-bezier(0.3, 0, 0.8, 1) forwards;
+}
+@keyframes meteor-drop {
+    0%   { transform: translateY(0) rotate(25deg) scale(1.2); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(var(--fall-y, 600px)) rotate(25deg) scale(0.8); opacity: 0.8; }
+}
+
+/* =========================================================
+   Sam Ultimate - Dive & Explosion
+   ========================================================= */
+
+/* サム本体の落下クローン */
+.sam-dive-clone {
+    position: fixed;
+    width: 160px;
+    object-fit: contain;
+    transform: translateX(-50%);
+    z-index: 1500;
+    pointer-events: none;
+}
+
+/* 着弾フラッシュ：画面全体を覆う */
+.sam-big-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    pointer-events: none;
+    animation: sam-big-flash-anim 1.2s ease-out forwards;
+}
+@keyframes sam-big-flash-anim {
+    0%   { background: radial-gradient(circle at 70% 50%, #ffffff 0%, #ffd700 20%, #ff4400 50%, transparent 80%); opacity: 1; }
+    15%  { background: radial-gradient(circle at 70% 50%, #ffffff 0%, #ffd700 30%, #ff6600 60%, #220000 100%); opacity: 1; }
+    40%  { background: radial-gradient(circle at 70% 50%, #ffaa00 0%, #ff2200 40%, #000 100%); opacity: 0.85; }
+    70%  { background: radial-gradient(circle at 70% 50%, #ff4400 0%, #000 60%); opacity: 0.5; }
+    100% { opacity: 0; }
+}
+
+/* 爆発コア（複数層） */
+.sam-explosion-core {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1450;
+    pointer-events: none;
+    animation: sam-core-explode 1s ease-out forwards;
+    background: radial-gradient(circle, #fff 0%, var(--exp-color, #ffd700) 40%, transparent 100%);
+}
+@keyframes sam-core-explode {
+    0%   { transform: translate(-50%, -50%) scale(0);  opacity: 1; filter: brightness(5); }
+    20%  { transform: translate(-50%, -50%) scale(6);  opacity: 1; }
+    50%  { transform: translate(-50%, -50%) scale(14); opacity: 0.8; filter: brightness(2); }
+    100% { transform: translate(-50%, -50%) scale(22); opacity: 0; }
+}
+
+/* 衝撃波リング */
+.sam-shockwave-ring {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 12px solid rgba(255, 220, 0, 0.95);
+    box-shadow: 0 0 30px #ffd700, 0 0 60px #ff4400, inset 0 0 30px rgba(255,200,0,0.5);
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 1460;
+    pointer-events: none;
+    animation: sam-ring-expand 0.8s ease-out forwards;
+}
+@keyframes sam-ring-expand {
+    0%   { transform: translate(-50%, -50%) scale(0);  opacity: 1; border-width: 14px; }
+    50%  { opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(25); opacity: 0; border-width: 1px; }
+}
+
+/* =========================================================
+   Boss Defeat Outro
+   ========================================================= */
+
+/* セリフ吹き出し */
+.boss-speech-bubble {
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    padding: 14px 20px;
+    color: #fff;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.8;
+    white-space: nowrap;
+    z-index: 600;
+    text-align: center;
+    animation: speech-fadein 0.4s ease forwards;
+    pointer-events: none;
+}
+.boss-speech-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-top-color: rgba(255, 255, 255, 0.4);
+}
+@keyframes speech-fadein {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* 画面フラッシュ */
+.boss-defeat-flash {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 2000;
+    pointer-events: none;
+    animation: defeat-flash-anim 0.35s ease-out forwards;
+}
+@keyframes defeat-flash-anim {
+    0%   { opacity: 0.9; }
+    100% { opacity: 0; }
+}
+
+/* ボス：震え */
+.boss-defeat-shake img {
+    animation: boss-defeat-shake-anim 0.1s linear infinite !important;
+}
+@keyframes boss-defeat-shake-anim {
+    0%   { transform: scale(2.0) translate(0, 0); }
+    25%  { transform: scale(2.0) translate(-6px, 3px); }
+    50%  { transform: scale(2.0) translate(6px, -3px); }
+    75%  { transform: scale(2.0) translate(-4px, -4px); }
+    100% { transform: scale(2.0) translate(4px, 4px); }
+}
+
+/* ボス：シルエット化 */
+.boss-defeat-silhouette img {
+    transition: filter 0.8s ease !important;
+    filter: brightness(0) !important;
+}
+
+/* ボス：上から崩れて消える */
+@keyframes boss-crumble-anim {
+    0%   { clip-path: inset(0 0 0 0);   opacity: 1; }
+    30%  { clip-path: inset(0 0 30% 0); opacity: 1; }
+    60%  { clip-path: inset(0 0 65% 0); opacity: 0.7; }
+    100% { clip-path: inset(0 0 100% 0); opacity: 0; }
+}
+.boss-defeat-crumble img {
+    animation: boss-crumble-anim 1.8s ease-in forwards !important;
+}
+
+/* 塵パーティクル */
+.boss-dust-particle {
+    position: fixed;
+    border-radius: 50%;
+    background: radial-gradient(circle, #aaa 0%, #555 60%, transparent 100%);
+    pointer-events: none;
+    z-index: 601;
+    animation: dust-float linear forwards;
+}
+@keyframes dust-float {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.9; }
+    40%  { opacity: 0.7; }
+    100% { transform: translate(calc((var(--dx, 1) * 60px)), -120px) scale(0); opacity: 0; }
+}
+
+/* ボス撃破セリフ（コマンドエリア内） */
+.boss-defeat-speech-area {
+    width: 100%;
+    text-align: center;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 3px;
+    line-height: 2;
+    text-shadow: 0 0 10px rgba(255, 100, 100, 0.6), 2px 2px 0 #000, -2px -2px 0 #000;
+    padding: 10px 0;
+    min-height: 60px;
+}
+
+/* ボスセリフ内の赤文字 */
+.boss-speech-red {
+    color: #ff3333;
+    text-shadow: 0 0 8px #ff0000, 0 0 16px #ff4400, 2px 2px 0 #000, -2px -2px 0 #000;
+    font-weight: 900;
 }

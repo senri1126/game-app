@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 
 <head>
@@ -268,6 +268,12 @@
             setTimeout(() => {
                 fxLayer.innerHTML = '';
                 addLog(`<span style="color:#ff4444; font-weight:bold;">⚠ BOSS: Cosmic King が現れた！</span>`);
+                // ボス名を表示
+                const nameOverlay = document.getElementById('boss-name-overlay');
+                if (nameOverlay) {
+                    nameOverlay.style.transition = 'opacity 0.8s ease';
+                    nameOverlay.style.opacity = '1';
+                }
                 onComplete();
             }, 7500);
         }
@@ -403,6 +409,16 @@
                         <div class="status-text-mini sp" id="sp-text-${char.id}">${char.sp}%</div>
                     </div>
                 `;
+
+                // innerHTML設定後にボス名オーバーレイを追加（最初は非表示）
+                if (char.name === 'Cosmic King') {
+                    const nameOverlay = document.createElement('div');
+                    nameOverlay.className = 'boss-name-overlay';
+                    nameOverlay.id = 'boss-name-overlay';
+                    nameOverlay.textContent = char.name;
+                    nameOverlay.style.opacity = '0';
+                    card.appendChild(nameOverlay);
+                }
 
                 if (side === 'enemy' && char.hp > 0) {
                     card.onclick = () => {
@@ -636,79 +652,217 @@
                 }
                 else if (type === 'special') {
                     const name = activeChar.name;
-                    const charImgEl = document.querySelector(`#card-${activeChar.id} .char-avatar img`);
                     const fxLayer = document.getElementById('battle-fx-layer');
 
-                    // --- 中央カットイン演出 ---
+                    // --- カットイン演出 ---
                     const cutinOverlay = document.createElement('div');
                     cutinOverlay.className = 'ultimate-cutin-overlay';
                     const cutinImg = document.createElement('img');
                     cutinImg.className = 'ultimate-cutin-img';
-
-                    // 真の姿の画像パスを gacha.html およびユーザー指定と完全に一致させる
                     let specialImg = activeChar.img || "";
-                    if (name.includes('サム')) {
-                        specialImg = 'image/ガチャ/「【星の狩人】サム2」星5.png';
-                    } else if (name.includes('アルタイル')) {
-                        specialImg = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
-                    } else if (name.includes('ドラゴン')) {
-                        // ドラゴンは2枚目がないためそのまま
-                        specialImg = activeChar.img || "";
-                    }
+                    if (name.includes('サム'))       specialImg = 'image/ガチャ/「【星の狩人】サム2」星5.png';
+                    else if (name.includes('アルタイル')) specialImg = 'image/ガチャ/「【銀河の妖狐】アルタイル2」.png';
                     cutinImg.src = specialImg;
-
                     const flash = document.createElement('div');
                     flash.className = 'ultimate-bg-flash';
-
                     cutinOverlay.appendChild(flash);
                     cutinOverlay.appendChild(cutinImg);
                     document.body.appendChild(cutinOverlay);
-
-                    setTimeout(() => cutinOverlay.remove(), 2000);
-                    await wait(1200);
-
+                    await wait(1800); // カットイン表示
+                    cutinOverlay.remove();
                     fxLayer.innerHTML = '';
-                    if (name.includes('サム')) {
-                        fxLayer.className = 'sam-fx-active';
-                        logMsg = `究極奥義！【神域の矢】！ ${activeChar.name}が敵を殲滅する！`;
-                        addLog(logMsg);
-                        enemyParty.filter(e => e.hp > 0).forEach(e => {
-                            applyDamage(e, e.maxHp);
-                            showDamageEffect(e.id, e.maxHp, true);
-                        });
-                    } else if (name.includes('ドラゴン')) {
-                        fxLayer.className = 'dragon-fx';
-                        const shockwave = document.createElement('div');
-                        shockwave.className = 'dragon-shockwave';
-                        fxLayer.appendChild(shockwave);
-                        for (let i = 0; i < 15; i++) {
-                            const meteor = document.createElement('div');
-                            meteor.className = 'dragon-meteor';
-                            meteor.innerHTML = `<img src="image/ガチャ/隕石${i % 2 === 0 ? '' : '2'}.png" style="width:100%;">`;
-                            meteor.style.left = `${Math.random() * 100}%`;
-                            fxLayer.appendChild(meteor);
-                        }
-                        logMsg = `究極奥義！【聖竜の息吹】！ 敵全体を光が包む！`;
-                        addLog(logMsg);
-                        enemyParty.filter(e => e.hp > 0).forEach(e => {
-                            const dmg = Math.floor(e.maxHp * 0.5);
-                            applyDamage(e, dmg);
-                            showDamageEffect(e.id, dmg, true);
-                        });
-                    } else if (name.includes('アルタイル')) {
-                        fxLayer.className = 'altair-fx';
-                        const pillar = document.createElement('div');
-                        pillar.className = 'altair-fire-pillar';
-                        fxLayer.appendChild(pillar);
+                    fxLayer.className = '';
+
+                    // ===== アルタイル =====
+                    if (name.includes('アルタイル')) {
                         logMsg = `究極奥義！【恒星の獄炎】！ 敵全体を永劫の炎が焼き尽くす！`;
-                        addLog(logMsg);
-                        enemyParty.filter(e => e.hp > 0).forEach(e => {
+                        addLog(logMsg); logMsg = "";
+
+                        // アルタイル攻撃.pngを敵全体に大量に飛ばす
+                        const aliveEnemies = enemyParty.filter(e => e.hp > 0);
+                        const projectileCount = aliveEnemies.length * 5;
+                        const attackerEl2 = document.getElementById(`card-${activeChar.id}`);
+                        const fromRect = attackerEl2?.getBoundingClientRect();
+                        for (let i = 0; i < projectileCount; i++) {
+                            await wait(120);
+                            const target = aliveEnemies[i % aliveEnemies.length];
+                            const toEl = document.getElementById(`card-${target.id}`);
+                            if (!fromRect || !toEl) continue;
+                            const toRect = toEl.getBoundingClientRect();
+                            const proj = document.createElement('img');
+                            proj.src = 'image/クエスト/アルタイル攻撃.png';
+                            proj.className = 'projectile';
+                            proj.style.left = `${fromRect.left + fromRect.width / 2}px`;
+                            proj.style.top  = `${fromRect.top  + fromRect.height / 2 - 80}px`;
+                            document.body.appendChild(proj);
+                            setTimeout(() => {
+                                proj.style.left = `${toRect.left + toRect.width / 2}px`;
+                                proj.style.top  = `${toRect.top  + toRect.height / 2}px`;
+                                proj.style.transform = 'translate(-50%,-50%) scale(1.5) rotate(720deg)';
+                            }, 50);
+                            setTimeout(() => proj.remove(), 600);
+                        }
+                        await wait(400);
+
+                        // 敵全体を赤く燃え上がらせる
+                        aliveEnemies.forEach(e => {
+                            const el = document.getElementById(`card-${e.id}`);
+                            if (el) { el.classList.add('fire-hit-ultimate'); setTimeout(() => el.classList.remove('fire-hit-ultimate'), 1200); }
+                        });
+                        await wait(800);
+
+                        // ダメージ
+                        aliveEnemies.forEach(e => {
                             if (!e.statusEffects) e.statusEffects = [];
                             if (!e.statusEffects.includes('burn')) e.statusEffects.push('burn');
                             const dmg = Math.floor(activeChar.atk * 0.5);
                             applyDamage(e, dmg);
                             showDamageEffect(e.id, dmg, true);
                         });
+
+                    // ===== サム =====
+                    } else if (name.includes('サム')) {
+                        logMsg = `究極奥義！【神域の矢】！ ${activeChar.name}が敵を殲滅する！`;
+                        addLog(logMsg); logMsg = "";
+
+                        const samEl = document.getElementById(`avatar-${activeChar.id}`);
+                        const samCard = document.getElementById(`card-${activeChar.id}`);
+                        const enemyContainer = document.getElementById('enemy-party-container');
+                        const eRect = enemyContainer?.getBoundingClientRect();
+                        const samRect = samCard?.getBoundingClientRect();
+
+                        // --- 1. サム本体が空へ高速上昇して消える ---
+                        if (samEl) {
+                            samEl.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
+                            samEl.style.transform = 'translateY(-200vh) scale(0.1)';
+                            samEl.style.opacity = '0';
+                        }
+                        await wait(400);
+
+                        // --- 2. 画面上部にサムのクローンを生成して敵へ超高速落下 ---
+                        const samClone = document.createElement('img');
+                        // サムの画像を取得
+                        const samImgEl = samEl?.querySelector('img');
+                        samClone.src = samImgEl?.src || 'image/ガチャ/「【星の狩人】サム2」星5.png';
+                        samClone.className = 'sam-dive-clone';
+                        const targetX = eRect ? eRect.left + eRect.width / 2 : window.innerWidth * 0.7;
+                        samClone.style.left = targetX + 'px';
+                        samClone.style.top = '-200px';
+                        // 黄金炎オーラ
+                        samClone.style.filter = 'drop-shadow(0 0 20px #ffd700) drop-shadow(0 0 40px #ff6600) brightness(1.8)';
+                        document.body.appendChild(samClone);
+
+                        // 少し待ってから超高速で落下
+                        await wait(150);
+                        const fallDist = (eRect ? eRect.top + eRect.height / 2 : window.innerHeight * 0.5) + 200;
+                        samClone.style.transition = 'transform 0.18s cubic-bezier(0.8, 0, 1, 1), filter 0.18s';
+                        samClone.style.transform = `translateY(${fallDist}px) scale(2.5)`;
+                        samClone.style.filter = 'drop-shadow(0 0 60px #fff) drop-shadow(0 0 100px #ffd700) brightness(5)';
+                        await wait(200);
+                        samClone.remove();
+
+                        // --- 3. 着弾：画面を覆う大爆発 ---
+                        // 白フラッシュ
+                        const bigFlash = document.createElement('div');
+                        bigFlash.className = 'sam-big-flash';
+                        document.body.appendChild(bigFlash);
+
+                        // 爆発コア（複数層）
+                        for (let i = 0; i < 4; i++) {
+                            const exp = document.createElement('div');
+                            exp.className = 'sam-explosion-core';
+                            exp.style.left = `${targetX + (Math.random()-0.5)*80}px`;
+                            exp.style.top  = `${(eRect?.top ?? window.innerHeight*0.5) + eRect?.height/2 + (Math.random()-0.5)*60}px`;
+                            exp.style.animationDelay = `${i * 80}ms`;
+                            exp.style.setProperty('--exp-color', i % 2 === 0 ? '#ffd700' : '#ff4400');
+                            document.body.appendChild(exp);
+                            setTimeout(() => exp.remove(), 1200);
+                        }
+
+                        // 衝撃波リング
+                        for (let i = 0; i < 3; i++) {
+                            setTimeout(() => {
+                                const ring = document.createElement('div');
+                                ring.className = 'sam-shockwave-ring';
+                                ring.style.left = targetX + 'px';
+                                ring.style.top  = `${(eRect?.top ?? window.innerHeight*0.5) + (eRect?.height ?? 100)/2}px`;
+                                document.body.appendChild(ring);
+                                setTimeout(() => ring.remove(), 800);
+                            }, i * 150);
+                        }
+
+                        // 画面震え（強烈）
+                        document.body.classList.add('screen-quake');
+                        setTimeout(() => {
+                            document.body.classList.remove('screen-quake');
+                            document.body.classList.add('screen-quake');
+                            setTimeout(() => document.body.classList.remove('screen-quake'), 500);
+                        }, 300);
+
+                        await wait(1200);
+                        bigFlash.remove();
+
+                        // サムを元に戻す
+                        if (samEl) {
+                            samEl.style.transition = 'none';
+                            samEl.style.transform = '';
+                            samEl.style.opacity = '1';
+                        }
+
+                        // ダメージ
+                        enemyParty.filter(e => e.hp > 0).forEach(e => {
+                            applyDamage(e, e.maxHp);
+                            showDamageEffect(e.id, e.maxHp, true);
+                        });
+
+                    // ===== ホーリードラゴン =====
+                    } else if (name.includes('ドラゴン')) {
+                        logMsg = `究極奥義！【聖竜の息吹】！ 隕石が降り注ぐ！`;
+                        addLog(logMsg); logMsg = "";
+
+                        const aliveE = enemyParty.filter(e => e.hp > 0);
+                        // 隕石を敵に向かって順番に落とす
+                        for (let i = 0; i < 12; i++) {
+                            await wait(180);
+                            const target = aliveE[i % aliveE.length];
+                            const toEl = document.getElementById(`card-${target.id}`);
+                            if (!toEl) continue;
+                            const toR = toEl.getBoundingClientRect();
+                            const meteor = document.createElement('img');
+                            meteor.src = `image/ガチャ/隕石${i % 2 === 0 ? '' : '2'}.png`;
+                            meteor.className = 'meteor-fall';
+                            const startX = toR.left + toR.width / 2 + (Math.random() - 0.5) * 120;
+                            const startY = -120;
+                            const fallDist = toR.top + toR.height / 2 - startY;
+                            meteor.style.left = startX + 'px';
+                            meteor.style.top  = startY + 'px';
+                            meteor.style.setProperty('--fall-y', fallDist + 'px');
+                            document.body.appendChild(meteor);
+                            // 着弾時に炎エフェクト
+                            setTimeout(() => {
+                                toEl.classList.add('fire-hit');
+                                setTimeout(() => toEl.classList.remove('fire-hit'), 500);
+                                meteor.remove();
+                            }, 500);
+                        }
+                        await wait(600);
+
+                        // ショックウェーブ
+                        const shockwave = document.createElement('div');
+                        shockwave.className = 'dragon-shockwave';
+                        fxLayer.appendChild(shockwave);
+                        document.body.classList.add('screen-quake');
+                        setTimeout(() => document.body.classList.remove('screen-quake'), 600);
+                        await wait(800);
+
+                        // ダメージ
+                        aliveE.forEach(e => {
+                            const dmg = Math.floor(e.maxHp * 0.5);
+                            applyDamage(e, dmg);
+                            showDamageEffect(e.id, dmg, true);
+                        });
+
+                    // ===== その他 =====
                     } else {
                         damage = calculateDamage(activeChar.atk * 3.0, 1.0, currentTarget.def);
                         logMsg = `必殺技！ ${activeChar.name}の極大攻撃！ ${currentTarget.name}に ${damage}のダメージ！`;
@@ -716,7 +870,7 @@
                         showDamageEffect(currentTarget.id, damage, true);
                     }
 
-                    await wait(800);
+                    await wait(600);
                     fxLayer.innerHTML = '';
                     fxLayer.className = '';
                     activeChar.sp = 0;
@@ -854,7 +1008,10 @@
                 const el = document.getElementById(`card-${target.id}`);
                 if (el) {
                     el.classList.add('defeated');
-                    el.style.opacity = '0'; // 即座に消滅
+                    // ボス（Cosmic King）は撃破演出で消すので即消しない
+                    if (target.name !== 'Cosmic King') {
+                        el.style.opacity = '0';
+                    }
                     el.style.pointerEvents = 'none';
                 }
                 addLog(`${target.name}を撃破！`);
@@ -885,9 +1042,12 @@
                 currentStage++;
                 isProcessing = true;
                 disableCommands(true);
-                turnQueue = []; // 残りのターンをすべてキャンセル
+                turnQueue = [];
                 if (currentStage >= STAGES.length) {
-                    showOverlay('Congratulations🎉🎉🎉', '銀河の帝王を倒した。<br>冒険はまだまだ続く．．．', 'タイトルへ戻る', 'victory');
+                    // ボス撃破演出を挟んでから勝利画面
+                    playBossDefeatOutro(() => {
+                        showOverlay('Congratulations🎉🎉🎉', '宇宙の帝王を倒し、次は銀河の皇帝へ挑む。<br>冒険はまだまだ続く．．．', 'タイトルへ戻る', 'victory');
+                    });
                 } else {
                     addLog(`敵を全滅させた！ 次の戦いへ...`);
                     isProcessing = true;
@@ -901,6 +1061,90 @@
                 return true;
             }
             return false;
+        }
+
+        async function playBossDefeatOutro(onComplete) {
+            const boss = enemyParty.find(e => e.name === 'Cosmic King');
+            const bossCard = boss ? document.getElementById(`card-${boss.id}`) : null;
+            const bossAvatar = boss ? document.getElementById(`avatar-${boss.id}`) : null;
+
+            // --- 1. コマンドエリアにセリフを1文字ずつ表示 ---
+            const cmdGrid = document.getElementById('command-buttons');
+            if (cmdGrid) cmdGrid.style.display = 'none';
+
+            const speechArea = document.createElement('div');
+            speechArea.className = 'boss-defeat-speech-area';
+            const actionArea = document.querySelector('.action-area-fixed');
+            if (actionArea) actionArea.appendChild(speechArea);
+
+            const lines = [
+                '私の負けだ．．．',
+                'だが<span class="boss-speech-red">「驫豐ｳ縺ｮ逧�ｸ�」様</span>は私より強いぞ．．．!!'
+            ];
+            for (const line of lines) {
+                speechArea.innerHTML = '';
+                // HTMLタグを含む文字列を1文字ずつ表示（タグは一括挿入）
+                const parts = line.split(/(<[^>]+>)/);
+                let built = '';
+                for (const part of parts) {
+                    if (part.startsWith('<')) {
+                        built += part;
+                        speechArea.innerHTML = built;
+                    } else {
+                        for (const ch of part) {
+                            await wait(130);
+                            built += ch;
+                            speechArea.innerHTML = built;
+                        }
+                    }
+                }
+                await wait(900);
+            }
+            speechArea.remove();
+            if (cmdGrid) cmdGrid.style.display = '';
+
+            // --- 2. 画面を2回フラッシュ ---
+            for (let i = 0; i < 2; i++) {
+                const fl = document.createElement('div');
+                fl.className = 'boss-defeat-flash';
+                document.body.appendChild(fl);
+                await wait(350);
+                fl.remove();
+                await wait(150);
+            }
+
+            // --- 3. ボスが震えながらシルエット化 ---
+            if (bossAvatar) {
+                bossAvatar.classList.add('boss-defeat-shake');
+                await wait(600);
+                bossAvatar.classList.add('boss-defeat-silhouette');
+                await wait(900);
+                bossAvatar.classList.remove('boss-defeat-shake');
+            }
+
+            // --- 4. 上から塵になって消える ---
+            if (bossAvatar) {
+                bossAvatar.classList.add('boss-defeat-crumble');
+                const bossRect = bossCard?.getBoundingClientRect();
+                for (let i = 0; i < 40; i++) {
+                    setTimeout(() => {
+                        const dust = document.createElement('div');
+                        dust.className = 'boss-dust-particle';
+                        const bx = bossRect ? bossRect.left + Math.random() * bossRect.width : window.innerWidth * 0.7;
+                        const by = bossRect ? bossRect.top + Math.random() * bossRect.height * 0.6 : window.innerHeight * 0.3;
+                        dust.style.left = bx + 'px';
+                        dust.style.top  = by + 'px';
+                        dust.style.width = dust.style.height = (3 + Math.random() * 8) + 'px';
+                        dust.style.animationDuration = (0.8 + Math.random() * 1.2) + 's';
+                        dust.style.setProperty('--dx', (Math.random() * 2 - 1).toFixed(2));
+                        document.body.appendChild(dust);
+                        setTimeout(() => dust.remove(), 2000);
+                    }, i * 40);
+                }
+                await wait(1800);
+            }
+
+            onComplete();
         }
 
         function updateCommandUI() {
