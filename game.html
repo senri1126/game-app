@@ -281,6 +281,7 @@
         function loadStage() {
             try {
                 isProcessing = true; // 読み込み中は操作禁止
+                stageTransitioning = false; // ステージ遷移フラグをリセット
                 const stageData = STAGES[currentStage];
 
                 // 最終ステージ（ボス戦）判定
@@ -470,7 +471,7 @@
 
         // --- ターン制御 ---
         async function startTurnCycle() {
-            if (isProcessing) return;
+            if (isProcessing || stageTransitioning) return;
             activeChar = null; // 新しいサイクルのために現在行動者をリセット
 
             // 速度順に全キャラを並べる
@@ -483,8 +484,12 @@
         }
 
         async function nextTurn() {
-            // ターンを進める前に勝敗チェック
-            if (checkWinLoss()) return;
+            // 遷移中または勝敗確定なら止める
+            if (stageTransitioning) return;
+            if (enemyParty.every(e => e.hp <= 0) || playerParty.every(p => p.hp <= 0)) {
+                checkWinLoss();
+                return;
+            }
 
             if (turnQueue.length === 0) {
                 isProcessing = false;
@@ -552,7 +557,7 @@
             if (name.includes('アルタイル')) {
                 // アルタイル攻撃.png が敵に飛んでいき敵が炎に包まれる
                 // 手の位置から出すため、少し上(centerY - 80px)から発射
-                await shootProjectile('image/クエスト/アルタイル攻撃.png', attackerRect, targetRect, -80);
+                await shootProjectile('image/クエスト/アルタイル攻撃.png', attackerRect, targetRect, -20);
                 targetEl.classList.add('fire-hit');
                 setTimeout(() => targetEl.classList.remove('fire-hit'), 800);
                 await wait(400);
@@ -635,15 +640,11 @@
                     activeChar.sp = Math.min(100, activeChar.sp + 20);
                     showDamageEffect(currentTarget.id, damage);
 
-                    // 攻撃直後に全滅チェック（waitを挟まず即判定）
                     if (logMsg) addLog(logMsg);
                     updateStatusAll();
-                    if (enemyParty.every(e => e.hp <= 0)) {
-                        isProcessing = true;
-                        checkWinLoss();
-                        return;
-                    }
-                    logMsg = ""; // 後続の重複addLogを防ぐ
+                    await wait(400);
+                    if (checkWinLoss()) return;
+                    logMsg = "";
                 }
                 else if (type === 'evade') {
                     activeChar.isEvading = true;
@@ -693,7 +694,7 @@
                             proj.src = 'image/クエスト/アルタイル攻撃.png';
                             proj.className = 'projectile';
                             proj.style.left = `${fromRect.left + fromRect.width / 2}px`;
-                            proj.style.top  = `${fromRect.top  + fromRect.height / 2 - 80}px`;
+                            proj.style.top  = `${fromRect.top  + fromRect.height / 2 - 20}px`;
                             document.body.appendChild(proj);
                             setTimeout(() => {
                                 proj.style.left = `${toRect.left + toRect.width / 2}px`;
@@ -1037,8 +1038,12 @@
             });
         }
 
+        let stageTransitioning = false; // 二重実行防止フラグ
+
         function checkWinLoss() {
             if (enemyParty.every(e => e.hp <= 0)) {
+                if (stageTransitioning) return true; // 処理済み
+                stageTransitioning = true;
                 currentStage++;
                 isProcessing = true;
                 disableCommands(true);
@@ -1046,13 +1051,13 @@
                 if (currentStage >= STAGES.length) {
                     // ボス撃破演出を挟んでから勝利画面
                     playBossDefeatOutro(() => {
-                        showOverlay('Congratulations🎉🎉🎉', '宇宙の帝王を倒し、次は銀河の皇帝へ挑む。<br>冒険はまだまだ続く．．．', 'タイトルへ戻る', 'victory');
+                        showOverlay('Congratulations🎉🎉🎉', 'おめでとう！宇宙の帝王を倒した！<br>しかし、戦いはまだ終わっていなかった．．．', 'タイトルへ戻る', 'victory');
                     });
                 } else {
                     addLog(`敵を全滅させた！ 次の戦いへ...`);
                     isProcessing = true;
                     disableCommands(true);
-                    setTimeout(loadStage, 1500);
+                    setTimeout(() => { stageTransitioning = false; loadStage(); }, 400);
                 }
                 return true;
             }
@@ -1079,7 +1084,7 @@
 
             const lines = [
                 'ぐおおおおおお．．．私の負けだ．．．',
-                'だが<span class="boss-speech-red">「驫豐ｳ縺ｮ逧�ｸ�」様</span>には誰も勝てない．．．!!'
+                '<span class="boss-speech-red">だが、これで終わりだと思うなよ．．．！！</span>'
             ];
             for (const line of lines) {
                 speechArea.innerHTML = '';
